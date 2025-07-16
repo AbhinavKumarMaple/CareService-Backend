@@ -1,17 +1,12 @@
 # Caregiver Microservices Application
 
-This project is a microservices-based backend application built in Go, designed to manage caregiver-related functionalities such as user management and scheduling. It adheres to modern architectural principles to ensure scalability, maintainability, and testability.
+The purpose of this backend application is to demonstrate a clean, modular, and practical approach to backend development by blending architectural patterns tailored to real-world use cases. It brings together multiple backend design strategies into a unified and coherent codebase. Special care has been taken to ensure the structure is not only easy to understand but also effortless to deploy, with a fully pre-configured Docker setup.
+
+This project took me longer than I initially expected — primarily because it was my first deep dive into Go (Golang) beyond just experimenting. However, the journey was absolutely worth it. I’m genuinely impressed by Go’s simple yet powerful approach to backend development, and this experience has deepened my appreciation for its clarity, performance, and ecosystem. altho it does lack alot of community supports unlike js frameworks.
 
 ## Architecture Overview
 
 This application strictly adheres to **Clean Architecture** principles. This design philosophy ensures a clear separation of concerns, making the codebase highly testable, maintainable, and independent of external frameworks.
-
-### Key Principles:
-
-- **Separation of Concerns**: Clear boundaries are established between business rules, application logic, and external dependencies.
-- **100% Testability**: The core business logic (use cases) is independent of external frameworks, allowing for easy and isolated testing with mocks.
-- **Framework Independence**: The application's core logic does not depend on specific web frameworks, databases, or external services. This flexibility allows for easier technology swaps or upgrades in the future without impacting the core business rules.
-- **Dependency Rule**: A fundamental rule of Clean Architecture is that dependencies always point inwards. Outer layers (like `infrastructure`) depend on inner layers (like `application` and `domain`), but inner layers have no knowledge of outer layers.
 
 ### Layered Structure:
 
@@ -21,94 +16,16 @@ The application is organized into three primary layers:
 - `application/`: This layer encapsulates the application-specific business logic, often referred to as "Use Cases" or "Interactors." Use cases orchestrate the flow of data to and from the domain entities and interact with interfaces defined in the domain layer (e.g., repository interfaces). They are responsible for validating business rules and coordinating operations.
 - `infrastructure/`: The outermost layer. This layer contains the concrete implementations of interfaces defined in the inner layers. This includes implementations for databases, web frameworks, external services, logging, and security. It adapts external technologies to the application's specific needs.
 
-### Architectural Diagram:
-
-```mermaid
-graph TB
-    subgraph "External Layer"
-        UI[Web UI]
-        API[REST API]
-        DB[(PostgreSQL)]
-        JWT[JWT Tokens]
-    end
-
-    subgraph "Infrastructure Layer"
-        Controllers[REST Controllers]
-        Repositories[Repositories]
-        Security[JWT Security]
-        Logger[Structured Logging]
-        DI[Dependency Injection]
-    end
-
-    subgraph "Application Layer"
-        AuthUC[Auth Use Cases]
-        UserUC[User Use Cases]
-        MedicineUC[Medicine Use Cases]
-    end
-
-    subgraph "Domain Layer"
-        Entities[Domain Entities]
-        Rules[Business Rules]
-        Errors[Domain Errors]
-        Interfaces[Domain Interfaces]
-    end
-
-    UI --> API
-    API --> Controllers
-    Controllers --> AuthUC
-    Controllers --> UserUC
-    Controllers --> MedicineUC
-    AuthUC --> Entities
-    UserUC --> Entities
-    MedicineUC --> Entities
-    Repositories --> DB
-    AuthUC --> Repositories
-    UserUC --> Repositories
-    MedicineUC --> Repositories
-    Security --> JWT
-    Security --> AuthUC
-    Logger --> Controllers
-    Logger --> Repositories
-    DI --> Controllers
-    DI --> Repositories
-    DI --> Security
-```
-
-### Use Case Flow:
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Controller
-    participant UseCase
-    participant Repository
-    participant Domain
-    participant Database
-
-    Client->>Controller: HTTP Request
-    Controller->>UseCase: Execute Business Logic
-    UseCase->>Domain: Validate Business Rules
-    UseCase->>Repository: Data Access
-    Repository->>Database: SQL Query
-    Database-->>Repository: Data
-    Repository-->>UseCase: Domain Objects
-    UseCase-->>Controller: Result
-    Controller-->>Client: HTTP Response
-```
-
 ## Key Technologies and Libraries
 
 This project leverages several key Go libraries to implement its functionalities and adhere to the Clean Architecture principles:
 
 - **Gin Gonic (`github.com/gin-gonic/gin`)**:
-  - **Purpose**: A high-performance HTTP web framework.
-  - **Rationale**: Chosen for its speed, robust routing capabilities, and extensive middleware support, providing an efficient and flexible way to handle HTTP requests and responses.
+  - **Purpose**: A high-performance HTTP web framework. close to how express is in js
 - **GORM (`gorm.io/gorm`, `gorm.io/driver/postgres`)**:
-  - **Purpose**: An Object-Relational Mapper (ORM) for Go, specifically used with PostgreSQL.
-  - **Rationale**: Selected for its ease of use in mapping Go structs to database tables, simplifying CRUD (Create, Read, Update, Delete) operations, database migrations, and complex queries, while abstracting away raw SQL.
+  - **Purpose**: An Object-Relational Mapper (ORM) for Go, specifically used with PostgreSQL and without an orm i can not recommend any use of db
 - **Go-Playground Validator (`github.com/go-playground/validator/v10`)**:
   - **Purpose**: A powerful and flexible Go package for struct and field validation.
-  - **Rationale**: Utilized for robust request payload validation, ensuring data integrity at the API entry point using struct tags (e.g., `binding:"required"`).
 - **Go-JWT (`github.com/golang-jwt/jwt/v4`)**:
   - **Purpose**: A library for creating and parsing JSON Web Tokens (JWTs).
   - **Rationale**: Essential for implementing secure authentication and authorization, allowing the generation of both access and refresh tokens with custom claims and expiration times.
@@ -136,13 +53,13 @@ This project leverages several key Go libraries to implement its functionalities
 
 ## Application Structure and Components
 
-The `src/` directory is the heart of the application, organized according to Clean Architecture principles:
+The `src/` directory is the heart of the application:
 
 ### `src/domain/`
 
 This layer contains the core business logic and data structures, completely independent of external frameworks.
 
-- `user/`, `schedule/`, `medicine/`: These sub-packages define the Go structs for domain entities (e.g., `User`, `Schedule`, `Medicine`) and their associated interfaces (e.g., `UserRepositoryInterface`). These interfaces act as contracts that the `infrastructure` layer must implement.
+- `user/`, `schedule/`, : These sub-packages define the Go structs for domain entities (e.g., `User`, `Schedule`) and their associated interfaces (e.g., `UserRepositoryInterface`). These interfaces act as contracts that the `infrastructure` layer must implement.
 - `errors/`: Custom error types (e.g., `NotFound`, `ValidationError`, `NotAuthenticated`, `RepositoryError`) are defined here. This provides a standardized and semantically rich way to handle and categorize application errors across all layers, improving error clarity and debugging.
 
 ### `src/application/usecases/`
@@ -209,27 +126,6 @@ The application employs a multi-layered validation strategy to ensure data integ
 ## Error Handling
 
 The application features a robust and centralized error handling mechanism:
-
-### Error Flow:
-
-```mermaid
-graph TB
-    subgraph "Error Handling Flow"
-        A[Error Occurs] --> B{Error Type?}
-        B -->|Domain Error| C[Domain Error Handler]
-        B -->|Infrastructure Error| D[Infrastructure Error Handler]
-        B -->|Validation Error| E[Validation Error Handler]
-        B -->|Unknown Error| F[Generic Error Handler]
-
-        C --> G[HTTP Status Code]
-        D --> G
-        E --> G
-        F --> G
-
-        G --> H[Error Response]
-        H --> I[Client]
-    end
-```
 
 - Custom error types are defined in the `src/domain/errors` package (e.g., `NotFound`, `ValidationError`, `NotAuthenticated`, `RepositoryError`).
 - The `NewAppError` function is used to wrap underlying Go errors with a specific `ErrorType`, providing context and categorization.
