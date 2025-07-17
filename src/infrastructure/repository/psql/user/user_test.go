@@ -147,8 +147,9 @@ func TestRepository_Create(t *testing.T) {
 		Location:     domainUser.Location{HouseNumber: "1", Street: "Main St"},
 	}
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "users"`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uuid.New()))
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "users" ("id","user_name","email","first_name","last_name","status","hash_password","role","profile_picture","location_house_number","location_street","location_city","location_state","location_pincode","location_lat","location_long","created_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`)).
+		WithArgs(sqlmock.AnyArg(), domainU.UserName, domainU.Email, domainU.FirstName, domainU.LastName, domainU.Status, domainU.HashPassword, domainU.Role, domainU.ProfilePicture, domainU.Location.HouseNumber, domainU.Location.Street, domainU.Location.City, domainU.Location.State, domainU.Location.Pincode, domainU.Location.Lat, domainU.Location.Long, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 	user, err := repo.Create(domainU)
 	assert.NoError(t, err)

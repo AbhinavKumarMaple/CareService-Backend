@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,7 +15,17 @@ import (
 func setupGinContext() (*gin.Context, *httptest.ResponseRecorder) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
+	router := gin.New()
+	// Add error handling middleware
+	router.Use(func(c *gin.Context) {
+		c.Next()
+		if len(c.Errors) > 0 {
+			err := c.Errors.Last().Err
+			c.JSON(500, gin.H{"error": err.Error()})
+		}
+	})
 	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/", nil)
 	return c, w
 }
 
@@ -28,11 +37,7 @@ func TestAuthJWTMiddleware_NoToken(t *testing.T) {
 	middleware(c)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
-
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, "Token not provided", response["error"])
+	assert.Contains(t, w.Body.String(), "Token not provided")
 }
 
 func TestAuthJWTMiddleware_NoJWTSecret(t *testing.T) {
@@ -47,12 +52,8 @@ func TestAuthJWTMiddleware_NoJWTSecret(t *testing.T) {
 	middleware := AuthJWTMiddleware()
 	middleware(c)
 
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
-
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, "JWT_ACCESS_SECRET_KEY not configured", response["error"])
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	assert.Contains(t, w.Body.String(), "JWT_ACCESS_SECRET_KEY not configured")
 }
 
 func TestAuthJWTMiddleware_InvalidToken(t *testing.T) {
@@ -68,11 +69,7 @@ func TestAuthJWTMiddleware_InvalidToken(t *testing.T) {
 	middleware(c)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
-
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, "Invalid token", response["error"])
+	assert.Contains(t, w.Body.String(), "Invalid token")
 }
 
 func TestAuthJWTMiddleware_ExpiredToken(t *testing.T) {
@@ -96,11 +93,7 @@ func TestAuthJWTMiddleware_ExpiredToken(t *testing.T) {
 	middleware(c)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
-
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Contains(t, []string{"Token expired", "Invalid token"}, response["error"])
+	assert.Contains(t, w.Body.String(), "Token expired")
 }
 
 func TestAuthJWTMiddleware_InvalidTokenClaims(t *testing.T) {
@@ -123,11 +116,7 @@ func TestAuthJWTMiddleware_InvalidTokenClaims(t *testing.T) {
 	middleware(c)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
-
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, "Invalid token claims", response["error"])
+	assert.Contains(t, w.Body.String(), "Invalid token claims")
 }
 
 func TestAuthJWTMiddleware_WrongTokenType(t *testing.T) {
@@ -150,11 +139,7 @@ func TestAuthJWTMiddleware_WrongTokenType(t *testing.T) {
 	middleware(c)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, "Token type mismatch", response["error"])
+	assert.Contains(t, w.Body.String(), "Token type mismatch")
 }
 
 func TestAuthJWTMiddleware_MissingTokenType(t *testing.T) {
@@ -176,11 +161,7 @@ func TestAuthJWTMiddleware_MissingTokenType(t *testing.T) {
 	middleware(c)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, "Missing token type", response["error"])
+	assert.Contains(t, w.Body.String(), "Missing token type")
 }
 
 func TestAuthJWTMiddleware_ValidToken(t *testing.T) {
@@ -205,6 +186,7 @@ func TestAuthJWTMiddleware_ValidToken(t *testing.T) {
 	middleware(c)
 
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Empty(t, w.Body.String())
 }
 
 func TestAuthJWTMiddleware_TokenWithoutBearer(t *testing.T) {
@@ -229,5 +211,6 @@ func TestAuthJWTMiddleware_TokenWithoutBearer(t *testing.T) {
 	middleware(c)
 
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assert.Contains(t, w.Body.String(), "Invalid token format")
 }

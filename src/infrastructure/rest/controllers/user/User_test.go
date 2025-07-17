@@ -238,7 +238,17 @@ func TestUpdateValidation(t *testing.T) {
 func setupGinContext() (*gin.Context, *httptest.ResponseRecorder) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
+	router := gin.New()
+	// Add error handling middleware
+	router.Use(func(c *gin.Context) {
+		c.Next()
+		if len(c.Errors) > 0 {
+			err := c.Errors.Last().Err
+			c.JSON(500, gin.H{"error": err.Error()})
+		}
+	})
 	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/", nil)
 	return c, w
 }
 
@@ -390,11 +400,11 @@ func TestUserController_GetUsersByID(t *testing.T) {
 		id := uuid.New()
 		c.Params = gin.Params{{Key: "id", Value: id.String()}}
 
-		mockService.On("GetByID", id).Return(nil, errors.New("service error"))
+		mockService.On("GetByID", id).Return((*domainUser.User)(nil), errors.New("service error"))
 
 		controller.GetUsersByID(c)
 
-		assert.Equal(t, http.StatusOK, w.Code) 
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
 		mockService.AssertExpectations(t)
 	})
 }

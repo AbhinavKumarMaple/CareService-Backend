@@ -9,6 +9,7 @@ import (
 
 	domainErrors "github.com/gbrayhan/microservices-go/src/domain/errors"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 const (
@@ -154,8 +155,14 @@ func (s *JWTService) GetClaimsAndVerifyToken(tokenString string, tokenType strin
 		return nil, domainErrors.NewAppError(errors.New("token missing id claim"), domainErrors.NotAuthenticated)
 	}
 	// Expect ID to be a string (UUID)
-	if _, ok := idVal.(string); !ok {
+	idStr, ok := idVal.(string)
+	if !ok {
 		return nil, domainErrors.NewAppError(errors.New("token id claim is not a string"), domainErrors.NotAuthenticated)
+	}
+	
+	// Validate that the ID is a valid UUID
+	if _, err := uuid.Parse(idStr); err != nil {
+		return nil, domainErrors.NewAppError(errors.New("invalid user ID in token claims"), domainErrors.NotAuthenticated)
 	}
 
 	return claims, nil

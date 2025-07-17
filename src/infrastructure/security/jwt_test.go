@@ -281,7 +281,7 @@ func TestGetClaimsAndVerifyToken_TokenWithoutClaims(t *testing.T) {
 
 func TestGetClaimsAndVerifyToken_TokenWithInvalidClaims(t *testing.T) {
 	claims := jwt.MapClaims{
-		"id":   "not_a_uuid_string", 
+		"id":   "not_a_uuid_string",
 		"type": Access,
 		"exp":  time.Now().Add(time.Hour).Unix(),
 	}
@@ -301,6 +301,7 @@ func TestGetClaimsAndVerifyToken_TokenWithInvalidClaims(t *testing.T) {
 	claims, err = service.GetClaimsAndVerifyToken(tokenString, Access)
 	assert.Error(t, err)
 	assert.Nil(t, claims)
+	assert.Contains(t, err.Error(), "invalid user ID in token claims")
 }
 
 func TestGetClaimsAndVerifyToken_TokenWithInvalidExpiration(t *testing.T) {
