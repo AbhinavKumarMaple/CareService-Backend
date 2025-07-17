@@ -27,6 +27,7 @@ type IScheduleUseCase interface {
 	CreateSchedule(newSchedule *domainSchedule.Schedule) (*domainSchedule.Schedule, error)
 	GetTodaySchedulesByAssignedUserID(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, error)
 	GetTodaySchedulesByAssignedUserIDWithClientInfo(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, *[]domainUser.User, error)
+	GetSchedulesInProgressByAssignedUserID(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, error)
 }
 
 type ScheduleUseCase struct {
@@ -76,6 +77,30 @@ func (s *ScheduleUseCase) StartSchedule(scheduleID uuid.UUID, timestamp time.Tim
 	if schedule.VisitStatus != "upcoming" {
 		s.Logger.Warn("Cannot start schedule, invalid status", zap.String("scheduleID", scheduleID.String()), zap.String("status", schedule.VisitStatus))
 		return nil, domainErrors.NewAppError(errors.New("schedule is not in 'upcoming' status"), domainErrors.ValidationError)
+	}
+
+	// Check if the current time is before the scheduled start time
+	if timestamp.Before(schedule.ScheduledSlot.From) {
+		s.Logger.Warn("Cannot start schedule before scheduled time", 
+			zap.String("scheduleID", scheduleID.String()),
+			zap.Time("currentTime", timestamp),
+			zap.Time("scheduledStartTime", schedule.ScheduledSlot.From))
+		return nil, domainErrors.NewAppError(errors.New("cannot start schedule before the scheduled start time"), domainErrors.ValidationError)
+	}
+
+	// Check if there are any other schedules in progress for the same assigned user
+	schedulesInProgress, err := s.scheduleRepository.GetSchedulesInProgressByAssignedUserID(schedule.AssignedUserID)
+	if err != nil {
+		s.Logger.Error("Error checking for schedules in progress", zap.Error(err), zap.String("assignedUserID", schedule.AssignedUserID.String()))
+		return nil, err
+	}
+
+	if schedulesInProgress != nil && len(*schedulesInProgress) > 0 {
+		s.Logger.Warn("Cannot start schedule, another schedule is already in progress", 
+			zap.String("scheduleID", scheduleID.String()), 
+			zap.String("assignedUserID", schedule.AssignedUserID.String()),
+			zap.Int("inProgressCount", len(*schedulesInProgress)))
+		return nil, domainErrors.NewAppError(errors.New("cannot start schedule: another schedule is already in progress for this user"), domainErrors.ValidationError)
 	}
 
 	updates := map[string]interface{}{
@@ -393,4 +418,9 @@ func (s *ScheduleUseCase) UpdateSchedule(scheduleID uuid.UUID, updates map[strin
 	
 	s.Logger.Info("Schedule updated successfully", zap.String("scheduleID", scheduleID.String()))
 	return updatedSchedule, nil
+}
+
+func (s *ScheduleUseCase) GetSchedulesInProgressByAssignedUserID(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, error) {
+	s.Logger.Info("Getting schedules in progress by assigned user ID", zap.String("assignedUserID", assignedUserID.String()))
+	return s.scheduleRepository.GetSchedulesInProgressByAssignedUserID(assignedUserID)
 }

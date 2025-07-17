@@ -62,4 +62,5 @@ type IScheduleRepository interface {
 	UpdateTask(taskID uuid.UUID, updates map[string]interface{}) (*Task, error)
 	Create(newSchedule *Schedule) (*Schedule, error) 
 	GetSchedulesByAssignedUserIDPaginated(assignedUserID uuid.UUID, filters domain.DataFilters) (*SearchResultSchedule, error)
+	GetSchedulesInProgressByAssignedUserID(assignedUserID uuid.UUID) (*[]Schedule, error)
 }

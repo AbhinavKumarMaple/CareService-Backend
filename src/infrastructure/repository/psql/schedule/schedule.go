@@ -332,3 +332,14 @@ func (r *Repository) GetSchedulesByAssignedUserIDPaginated(assignedUserID uuid.U
 
 	return result, nil
 }
+
+func (r *Repository) GetSchedulesInProgressByAssignedUserID(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, error) {
+	var schedules []Schedule
+	if err := r.DB.Preload("Tasks").
+		Where("assigned_user_id = ? AND visit_status = ?", assignedUserID, "in_progress").
+		Find(&schedules).Error; err != nil {
+		r.Logger.Error("Error getting schedules in progress by assigned user ID", zap.Error(err), zap.String("assignedUserID", assignedUserID.String()))
+		return nil, domainErrors.NewAppErrorWithType(domainErrors.UnknownError)
+	}
+	return arrayToDomainMapper(&schedules), nil
+}
