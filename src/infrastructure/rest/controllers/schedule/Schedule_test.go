@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
-	domainSchedule "github.com/gbrayhan/microservices-go/src/domain/schedule"
-	domainUser "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
+	domainSchedule "caregiver/src/domain/schedule"
+	domainUser "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -19,18 +20,18 @@ import (
 
 // mockScheduleUseCase is a mock implementation of the IScheduleUseCase interface
 type mockScheduleUseCase struct {
-	getSchedulesFn                                func() (*[]domainSchedule.Schedule, error)
-	getSchedulesWithClientInfoFn                  func() (*[]domainSchedule.Schedule, *[]domainUser.User, error)
-	getScheduleByIDFn                             func(id uuid.UUID) (*domainSchedule.Schedule, error)
-	getScheduleWithClientInfoFn                   func(id uuid.UUID) (*domainSchedule.Schedule, *domainUser.User, error)
-	getTodaySchedulesFn                           func(userID uuid.UUID) (*[]domainSchedule.Schedule, error)
-	getTodaySchedulesWithClientInfoFn             func(userID uuid.UUID) (*[]domainSchedule.Schedule, *[]domainUser.User, error)
-	startScheduleFn                               func(scheduleID uuid.UUID, timestamp time.Time, location domainSchedule.Location) (*domainSchedule.Schedule, error)
-	endScheduleFn                                 func(scheduleID uuid.UUID, timestamp time.Time, location domainSchedule.Location, tasks []domainSchedule.Task) (*domainSchedule.Schedule, error)
-	updateTaskStatusFn                            func(taskID uuid.UUID, status string, done bool, feedback string) (*domainSchedule.Task, error)
-	updateScheduleFn                              func(scheduleID uuid.UUID, updates map[string]interface{}) (*domainSchedule.Schedule, error)
-	createScheduleFn                              func(newSchedule *domainSchedule.Schedule) (*domainSchedule.Schedule, error)
-	getTodaySchedulesByAssignedUserIDFn           func(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, error)
+	getSchedulesFn                                    func() (*[]domainSchedule.Schedule, error)
+	getSchedulesWithClientInfoFn                      func() (*[]domainSchedule.Schedule, *[]domainUser.User, error)
+	getScheduleByIDFn                                 func(id uuid.UUID) (*domainSchedule.Schedule, error)
+	getScheduleWithClientInfoFn                       func(id uuid.UUID) (*domainSchedule.Schedule, *domainUser.User, error)
+	getTodaySchedulesFn                               func(userID uuid.UUID) (*[]domainSchedule.Schedule, error)
+	getTodaySchedulesWithClientInfoFn                 func(userID uuid.UUID) (*[]domainSchedule.Schedule, *[]domainUser.User, error)
+	startScheduleFn                                   func(scheduleID uuid.UUID, timestamp time.Time, location domainSchedule.Location) (*domainSchedule.Schedule, error)
+	endScheduleFn                                     func(scheduleID uuid.UUID, timestamp time.Time, location domainSchedule.Location, tasks []domainSchedule.Task) (*domainSchedule.Schedule, error)
+	updateTaskStatusFn                                func(taskID uuid.UUID, status string, done bool, feedback string) (*domainSchedule.Task, error)
+	updateScheduleFn                                  func(scheduleID uuid.UUID, updates map[string]interface{}) (*domainSchedule.Schedule, error)
+	createScheduleFn                                  func(newSchedule *domainSchedule.Schedule) (*domainSchedule.Schedule, error)
+	getTodaySchedulesByAssignedUserIDFn               func(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, error)
 	getTodaySchedulesByAssignedUserIDWithClientInfoFn func(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, *[]domainUser.User, error)
 }
 
@@ -99,14 +100,14 @@ func setupLogger(t *testing.T) *logger.Logger {
 // setupTestController creates a new Schedule controller with mock usecase for testing
 func setupTestController(t *testing.T) (*Controller, *mockScheduleUseCase, *gin.Engine) {
 	gin.SetMode(gin.TestMode)
-	
+
 	mockUseCase := &mockScheduleUseCase{}
 	loggerInstance := setupLogger(t)
 	controller := &Controller{
 		scheduleUseCase: mockUseCase,
 		Logger:          loggerInstance,
 	}
-	
+
 	router := gin.New()
 	router.Use(gin.Recovery())
 	// Add error handling middleware
@@ -117,7 +118,7 @@ func setupTestController(t *testing.T) (*Controller, *mockScheduleUseCase, *gin.
 			c.JSON(500, gin.H{"error": err.Error()})
 		}
 	})
-	
+
 	return controller, mockUseCase, router
 }
 
@@ -125,15 +126,15 @@ func setupTestController(t *testing.T) (*Controller, *mockScheduleUseCase, *gin.
 func createTestSchedule(id uuid.UUID) *domainSchedule.Schedule {
 	now := time.Now()
 	tomorrow := now.Add(24 * time.Hour)
-	
+
 	clientUserID := uuid.New()
 	assignedUserID := uuid.New()
-	
+
 	task1ID := uuid.New()
 	task2ID := uuid.New()
-	
+
 	done := false
-	
+
 	return &domainSchedule.Schedule{
 		ID:             id,
 		ClientUserID:   clientUserID,
@@ -192,33 +193,33 @@ func createTestUser(id uuid.UUID) *domainUser.User {
 func TestGetSchedules(t *testing.T) {
 	// Setup
 	controller, mockUseCase, router := setupTestController(t)
-	
+
 	// Setup route
 	router.GET("/schedules", controller.GetSchedules)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID1 := uuid.New()
 		scheduleID2 := uuid.New()
-		
+
 		schedule1 := createTestSchedule(scheduleID1)
 		schedule2 := createTestSchedule(scheduleID2)
-		
+
 		schedules := []domainSchedule.Schedule{*schedule1, *schedule2}
 		clients := []domainUser.User{*createTestUser(schedule1.ClientUserID), *createTestUser(schedule2.ClientUserID)}
-		
+
 		mockUseCase.getSchedulesWithClientInfoFn = func() (*[]domainSchedule.Schedule, *[]domainUser.User, error) {
 			return &schedules, &clients, nil
 		}
-		
+
 		// Execute request
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/schedules", nil)
 		router.ServeHTTP(w, req)
-		
+
 		// Verify
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response []ScheduleResponse
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -226,18 +227,18 @@ func TestGetSchedules(t *testing.T) {
 		assert.Equal(t, scheduleID1, response[0].ID)
 		assert.Equal(t, scheduleID2, response[1].ID)
 	})
-	
+
 	t.Run("Error", func(t *testing.T) {
 		// Setup mock behavior
 		mockUseCase.getSchedulesWithClientInfoFn = func() (*[]domainSchedule.Schedule, *[]domainUser.User, error) {
 			return nil, nil, errors.New("database error")
 		}
-		
+
 		// Execute request
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/schedules", nil)
 		router.ServeHTTP(w, req)
-		
+
 		// Verify
 		assert.NotEqual(t, http.StatusOK, w.Code)
 	})
@@ -247,19 +248,19 @@ func TestGetSchedules(t *testing.T) {
 func TestCreateSchedule(t *testing.T) {
 	// Setup
 	controller, mockUseCase, router := setupTestController(t)
-	
+
 	// Setup route
 	router.POST("/schedules", controller.CreateSchedule)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
 		clientUserID := uuid.New()
 		assignedUserID := uuid.New()
-		
+
 		now := time.Now()
 		tomorrow := now.Add(24 * time.Hour)
-		
+
 		// Create request body
 		requestBody := CreateScheduleRequest{
 			ClientUserID:   clientUserID,
@@ -280,12 +281,12 @@ func TestCreateSchedule(t *testing.T) {
 				},
 			},
 		}
-		
+
 		// Create expected schedule
 		createdSchedule := createTestSchedule(scheduleID)
 		createdSchedule.ClientUserID = clientUserID
 		createdSchedule.AssignedUserID = assignedUserID
-		
+
 		mockUseCase.createScheduleFn = func(newSchedule *domainSchedule.Schedule) (*domainSchedule.Schedule, error) {
 			// Verify schedule properties
 			assert.Equal(t, clientUserID, newSchedule.ClientUserID)
@@ -293,20 +294,20 @@ func TestCreateSchedule(t *testing.T) {
 			assert.Equal(t, "Test Service", newSchedule.ServiceName)
 			assert.Equal(t, "upcoming", newSchedule.VisitStatus)
 			assert.Len(t, newSchedule.Tasks, 2)
-			
+
 			return createdSchedule, nil
 		}
-		
+
 		// Execute request
 		w := httptest.NewRecorder()
 		jsonBody, _ := json.Marshal(requestBody)
 		req, _ := http.NewRequest("POST", "/schedules", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, req)
-		
+
 		// Verify
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response ScheduleResponse
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -317,7 +318,7 @@ func TestCreateSchedule(t *testing.T) {
 		assert.Equal(t, "upcoming", response.VisitStatus)
 		assert.Len(t, response.Tasks, 2)
 	})
-	
+
 	t.Run("Missing ClientUserID", func(t *testing.T) {
 		// Create request body with missing ClientUserID
 		requestBody := CreateScheduleRequest{
@@ -334,18 +335,18 @@ func TestCreateSchedule(t *testing.T) {
 				},
 			},
 		}
-		
+
 		// Execute request
 		w := httptest.NewRecorder()
 		jsonBody, _ := json.Marshal(requestBody)
 		req, _ := http.NewRequest("POST", "/schedules", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, req)
-		
+
 		// Verify
 		assert.NotEqual(t, http.StatusOK, w.Code)
 	})
-	
+
 	t.Run("Missing ScheduledSlot", func(t *testing.T) {
 		// Create request body with missing ScheduledSlot
 		requestBody := CreateScheduleRequest{
@@ -359,18 +360,18 @@ func TestCreateSchedule(t *testing.T) {
 				},
 			},
 		}
-		
+
 		// Execute request
 		w := httptest.NewRecorder()
 		jsonBody, _ := json.Marshal(requestBody)
 		req, _ := http.NewRequest("POST", "/schedules", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, req)
-		
+
 		// Verify
 		assert.NotEqual(t, http.StatusOK, w.Code)
 	})
-	
+
 	t.Run("Invalid ScheduledSlot", func(t *testing.T) {
 		// Create request body with invalid ScheduledSlot (From after To)
 		now := time.Now()
@@ -389,18 +390,18 @@ func TestCreateSchedule(t *testing.T) {
 				},
 			},
 		}
-		
+
 		// Execute request
 		w := httptest.NewRecorder()
 		jsonBody, _ := json.Marshal(requestBody)
 		req, _ := http.NewRequest("POST", "/schedules", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, req)
-		
+
 		// Verify
 		assert.NotEqual(t, http.StatusOK, w.Code)
 	})
-	
+
 	t.Run("No Tasks", func(t *testing.T) {
 		// Create request body with no tasks
 		requestBody := CreateScheduleRequest{
@@ -413,26 +414,26 @@ func TestCreateSchedule(t *testing.T) {
 			},
 			Tasks: []TaskRequest{}, // Empty tasks
 		}
-		
+
 		// Execute request
 		w := httptest.NewRecorder()
 		jsonBody, _ := json.Marshal(requestBody)
 		req, _ := http.NewRequest("POST", "/schedules", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, req)
-		
+
 		// Verify
 		assert.NotEqual(t, http.StatusOK, w.Code)
 	})
-	
+
 	t.Run("UseCase Error", func(t *testing.T) {
 		// Setup mock behavior
 		clientUserID := uuid.New()
 		assignedUserID := uuid.New()
-		
+
 		now := time.Now()
 		tomorrow := now.Add(24 * time.Hour)
-		
+
 		// Create request body
 		requestBody := CreateScheduleRequest{
 			ClientUserID:   clientUserID,
@@ -449,18 +450,18 @@ func TestCreateSchedule(t *testing.T) {
 				},
 			},
 		}
-		
+
 		mockUseCase.createScheduleFn = func(newSchedule *domainSchedule.Schedule) (*domainSchedule.Schedule, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute request
 		w := httptest.NewRecorder()
 		jsonBody, _ := json.Marshal(requestBody)
 		req, _ := http.NewRequest("POST", "/schedules", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, req)
-		
+
 		// Verify
 		assert.NotEqual(t, http.StatusOK, w.Code)
 	})

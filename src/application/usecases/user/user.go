@@ -1,10 +1,11 @@
 package user
 
 import (
-	"github.com/gbrayhan/microservices-go/src/domain"
-	userDomain "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/repository/psql/user"
+	"caregiver/src/domain"
+	userDomain "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+	"caregiver/src/infrastructure/repository/psql/user"
+
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -49,9 +50,9 @@ func (s *UserUseCase) GetByEmail(email string) (*userDomain.User, error) {
 
 func (s *UserUseCase) Create(newUser *userDomain.User) (*userDomain.User, error) {
 	s.Logger.Info("Creating new user", zap.String("email", newUser.Email))
-	
+
 	newUser.Status = true
-	newUser.ID = uuid.New() 
+	newUser.ID = uuid.New()
 
 	return s.userRepository.Create(newUser)
 }

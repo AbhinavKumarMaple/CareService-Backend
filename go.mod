@@ -1,4 +1,4 @@
-module github.com/gbrayhan/microservices-go
+module caregiver
 
 go 1.24.2
 

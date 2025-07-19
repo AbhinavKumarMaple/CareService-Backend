@@ -1,7 +1,8 @@
 package routes
 
 import (
-	scheduleController "github.com/gbrayhan/microservices-go/src/infrastructure/rest/controllers/schedule"
+	scheduleController "caregiver/src/infrastructure/rest/controllers/schedule"
+
 	"github.com/gin-gonic/gin"
 )
 

@@ -4,11 +4,12 @@ import (
 	"errors"
 	"time"
 
-	domainErrors "github.com/gbrayhan/microservices-go/src/domain/errors"
-	domainUser "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/repository/psql/user"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/security"
+	domainErrors "caregiver/src/domain/errors"
+	domainUser "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+	"caregiver/src/infrastructure/repository/psql/user"
+	"caregiver/src/infrastructure/security"
+
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )

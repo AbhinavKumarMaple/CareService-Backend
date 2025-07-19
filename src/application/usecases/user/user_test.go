@@ -5,9 +5,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gbrayhan/microservices-go/src/domain"
-	userDomain "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
+	"caregiver/src/domain"
+	userDomain "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+
 	"github.com/google/uuid"
 )
 
@@ -87,7 +88,7 @@ func TestUserUseCase(t *testing.T) {
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
-		
+
 		if u == nil || u.ID == uuid.Nil {
 			t.Errorf("expected a valid user, got %v", u)
 		}
@@ -98,7 +99,7 @@ func TestUserUseCase(t *testing.T) {
 			if email == "notfound@example.com" {
 				return nil, errors.New("not found")
 			}
-			return &userDomain.User{ID: uuid.New(), Email: email}, nil 
+			return &userDomain.User{ID: uuid.New(), Email: email}, nil
 		}
 		_, err := useCase.GetByEmail("notfound@example.com")
 		if err == nil {
@@ -121,7 +122,7 @@ func TestUserUseCase(t *testing.T) {
 			if newU.Email == "" {
 				return nil, errors.New("bad data")
 			}
-			newU.ID = uuid.New() 
+			newU.ID = uuid.New()
 			return newU, nil
 		}
 		created, err := useCase.Create(&userDomain.User{Email: "test@mail.com"})
@@ -142,16 +143,16 @@ func TestUserUseCase(t *testing.T) {
 
 	t.Run("Test Delete", func(t *testing.T) {
 		mockRepo.deleteFn = func(id uuid.UUID) error {
-			if id != uuid.Nil { 
+			if id != uuid.Nil {
 				return nil
 			}
 			return errors.New("cannot delete")
 		}
-		err := useCase.Delete(uuid.Nil) 
+		err := useCase.Delete(uuid.Nil)
 		if err == nil {
 			t.Error("expected error for cannot delete")
 		}
-		err = useCase.Delete(uuid.New()) 
+		err = useCase.Delete(uuid.New())
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}

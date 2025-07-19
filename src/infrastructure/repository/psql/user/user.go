@@ -4,28 +4,29 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/gbrayhan/microservices-go/src/domain"
-	domainErrors "github.com/gbrayhan/microservices-go/src/domain/errors"
-	domainUser "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
+	"caregiver/src/domain"
+	domainErrors "caregiver/src/domain/errors"
+	domainUser "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type User struct {
-	ID            uuid.UUID `gorm:"primaryKey"`
-	UserName      string    `gorm:"column:user_name;unique"`
-	Email         string    `gorm:"unique"`
-	FirstName     string    `gorm:"column:first_name"`
-	LastName      string    `gorm:"column:last_name"`
-	Status        bool      `gorm:"column:status"`
-	HashPassword  string    `gorm:"column:hash_password"`
-	Role          string    `gorm:"column:role"` 
-	ProfilePicture string    `gorm:"column:profile_picture"`
-	Location      domainUser.Location `gorm:"embedded;embeddedPrefix:location_"`
-	CreatedAt     time.Time `gorm:"autoCreateTime:mili"`
-	UpdatedAt     time.Time `gorm:"autoUpdateTime:mili"`
+	ID             uuid.UUID           `gorm:"primaryKey"`
+	UserName       string              `gorm:"column:user_name;unique"`
+	Email          string              `gorm:"unique"`
+	FirstName      string              `gorm:"column:first_name"`
+	LastName       string              `gorm:"column:last_name"`
+	Status         bool                `gorm:"column:status"`
+	HashPassword   string              `gorm:"column:hash_password"`
+	Role           string              `gorm:"column:role"`
+	ProfilePicture string              `gorm:"column:profile_picture"`
+	Location       domainUser.Location `gorm:"embedded;embeddedPrefix:location_"`
+	CreatedAt      time.Time           `gorm:"autoCreateTime:mili"`
+	UpdatedAt      time.Time           `gorm:"autoUpdateTime:mili"`
 }
 
 func (User) TableName() string {
@@ -33,25 +34,25 @@ func (User) TableName() string {
 }
 
 var ColumnsUserMapping = map[string]string{
-	"ID":            "id",
-	"UserName":      "user_name",
-	"Email":         "email",
-	"FirstName":     "first_name",
-	"LastName":      "last_name",
-	"Status":        "status",
-	"HashPassword":  "hash_password",
-	"Role":          "role",
+	"ID":             "id",
+	"UserName":       "user_name",
+	"Email":          "email",
+	"FirstName":      "first_name",
+	"LastName":       "last_name",
+	"Status":         "status",
+	"HashPassword":   "hash_password",
+	"Role":           "role",
 	"ProfilePicture": "profile_picture",
-	"Location":      "location", 
-	"HouseNumber":   "location_house_number",
-	"Street":        "location_street",
-	"City":          "location_city",
-	"State":         "location_state",
-	"Pincode":       "location_pincode",
-	"Lat":           "location_lat",
-	"Long":          "location_long",
-	"CreatedAt":     "created_at",
-	"UpdatedAt":     "updated_at",
+	"Location":       "location",
+	"HouseNumber":    "location_house_number",
+	"Street":         "location_street",
+	"City":           "location_city",
+	"State":          "location_state",
+	"Pincode":        "location_pincode",
+	"Lat":            "location_lat",
+	"Long":           "location_long",
+	"CreatedAt":      "created_at",
+	"UpdatedAt":      "updated_at",
 }
 
 type UserRepositoryInterface interface {
@@ -306,35 +307,35 @@ func (r *Repository) SearchByProperty(property string, searchText string) (*[]st
 
 func (u *User) toDomainMapper() *domainUser.User {
 	return &domainUser.User{
-		ID:            u.ID,
-		UserName:      u.UserName,
-		Email:         u.Email,
-		FirstName:     u.FirstName,
-		LastName:      u.LastName,
-		Status:        u.Status,
-		HashPassword:  u.HashPassword,
-		Role:          u.Role,
+		ID:             u.ID,
+		UserName:       u.UserName,
+		Email:          u.Email,
+		FirstName:      u.FirstName,
+		LastName:       u.LastName,
+		Status:         u.Status,
+		HashPassword:   u.HashPassword,
+		Role:           u.Role,
 		ProfilePicture: u.ProfilePicture,
-		Location:      u.Location,
-		CreatedAt:     u.CreatedAt,
-		UpdatedAt:     u.UpdatedAt,
+		Location:       u.Location,
+		CreatedAt:      u.CreatedAt,
+		UpdatedAt:      u.UpdatedAt,
 	}
 }
 
 func fromDomainMapper(u *domainUser.User) *User {
 	return &User{
-		ID:            u.ID,
-		UserName:      u.UserName,
-		Email:         u.Email,
-		FirstName:     u.FirstName,
-		LastName:      u.LastName,
-		Status:        u.Status,
-		HashPassword:  u.HashPassword,
-		Role:          u.Role,
+		ID:             u.ID,
+		UserName:       u.UserName,
+		Email:          u.Email,
+		FirstName:      u.FirstName,
+		LastName:       u.LastName,
+		Status:         u.Status,
+		HashPassword:   u.HashPassword,
+		Role:           u.Role,
 		ProfilePicture: u.ProfilePicture,
-		Location:      u.Location,
-		CreatedAt:     u.CreatedAt,
-		UpdatedAt:     u.UpdatedAt,
+		Location:       u.Location,
+		CreatedAt:      u.CreatedAt,
+		UpdatedAt:      u.UpdatedAt,
 	}
 }
 

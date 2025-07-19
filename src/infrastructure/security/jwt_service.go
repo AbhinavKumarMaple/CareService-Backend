@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	domainErrors "github.com/gbrayhan/microservices-go/src/domain/errors"
+	domainErrors "caregiver/src/domain/errors"
+
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
@@ -24,7 +25,7 @@ type AppToken struct {
 }
 
 type Claims struct {
-	ID   string `json:"id"` 
+	ID   string `json:"id"`
 	Type string `json:"type"`
 	jwt.RegisteredClaims
 }
@@ -37,7 +38,7 @@ type JWTConfig struct {
 }
 
 type IJWTService interface {
-	GenerateJWTToken(userID string, tokenType string) (*AppToken, error) 
+	GenerateJWTToken(userID string, tokenType string) (*AppToken, error)
 	GetClaimsAndVerifyToken(tokenString string, tokenType string) (jwt.MapClaims, error)
 }
 
@@ -67,7 +68,7 @@ func loadJWTConfig() JWTConfig {
 	}
 }
 
-func (s *JWTService) GenerateJWTToken(userID string, tokenType string) (*AppToken, error) { 
+func (s *JWTService) GenerateJWTToken(userID string, tokenType string) (*AppToken, error) {
 	var secretKey string
 	var duration time.Duration
 
@@ -159,7 +160,7 @@ func (s *JWTService) GetClaimsAndVerifyToken(tokenString string, tokenType strin
 	if !ok {
 		return nil, domainErrors.NewAppError(errors.New("token id claim is not a string"), domainErrors.NotAuthenticated)
 	}
-	
+
 	// Validate that the ID is a valid UUID
 	if _, err := uuid.Parse(idStr); err != nil {
 		return nil, domainErrors.NewAppError(errors.New("invalid user ID in token claims"), domainErrors.NotAuthenticated)

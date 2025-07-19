@@ -4,12 +4,13 @@ import (
 	"errors"
 	"net/http"
 
-	scheduleUseCase "github.com/gbrayhan/microservices-go/src/application/usecases/schedule"
-	domainErrors "github.com/gbrayhan/microservices-go/src/domain/errors"
-	domainSchedule "github.com/gbrayhan/microservices-go/src/domain/schedule"
-	domainUser "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/rest/controllers"
+	scheduleUseCase "caregiver/src/application/usecases/schedule"
+	domainErrors "caregiver/src/domain/errors"
+	domainSchedule "caregiver/src/domain/schedule"
+	domainUser "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+	"caregiver/src/infrastructure/rest/controllers"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -22,7 +23,7 @@ type IScheduleController interface {
 	StartSchedule(ctx *gin.Context)
 	EndSchedule(ctx *gin.Context)
 	UpdateTask(ctx *gin.Context)
-	UpdateSchedule(ctx *gin.Context) 
+	UpdateSchedule(ctx *gin.Context)
 	CreateSchedule(ctx *gin.Context)
 	GetTodaySchedulesByAssignedUserID(ctx *gin.Context)
 }
@@ -96,11 +97,11 @@ func (c *Controller) CreateSchedule(ctx *gin.Context) {
 
 	newSchedule := &domainSchedule.Schedule{
 		ClientUserID:   request.ClientUserID,
-		AssignedUserID: request.AssignedUserID, 
-		ServiceName:    request.ServiceName,    
+		AssignedUserID: request.AssignedUserID,
+		ServiceName:    request.ServiceName,
 		ScheduledSlot:  domainSchedule.ScheduledSlot{From: request.ScheduledSlot.From, To: request.ScheduledSlot.To},
 		Tasks:          domainTasks,
-		VisitStatus:    "upcoming", 
+		VisitStatus:    "upcoming",
 	}
 
 	createdSchedule, err := c.scheduleUseCase.CreateSchedule(newSchedule)
@@ -119,11 +120,11 @@ func clientToResponseMapper(u *domainUser.User) *ClientInfo {
 		return nil
 	}
 	return &ClientInfo{
-		ID:            u.ID,
-		UserName:      u.UserName,
-		Email:         u.Email,
-		FirstName:     u.FirstName,
-		LastName:      u.LastName,
+		ID:             u.ID,
+		UserName:       u.UserName,
+		Email:          u.Email,
+		FirstName:      u.FirstName,
+		LastName:       u.LastName,
 		ProfilePicture: u.ProfilePicture,
 		Location: ClientLocation{
 			HouseNumber: u.Location.HouseNumber,
@@ -151,11 +152,11 @@ func domainToResponseMapper(s *domainSchedule.Schedule) *ScheduleResponse {
 	}
 
 	return &ScheduleResponse{
-		ID:           s.ID,
+		ID:             s.ID,
 		ClientUserID:   s.ClientUserID,
-		ClientInfo:     nil, 
-		AssignedUserID: s.AssignedUserID, 
-		ServiceName:    s.ServiceName,    
+		ClientInfo:     nil,
+		AssignedUserID: s.AssignedUserID,
+		ServiceName:    s.ServiceName,
 		ScheduledSlot: ScheduledSlot{
 			From: s.ScheduledSlot.From,
 			To:   s.ScheduledSlot.To,
@@ -186,13 +187,13 @@ func arrayDomainToResponseMapper(schedules []domainSchedule.Schedule) []Schedule
 
 func arrayDomainToResponseMapperWithClients(schedules []domainSchedule.Schedule, clients []domainUser.User) []ScheduleResponse {
 	res := make([]ScheduleResponse, len(schedules))
-	
+
 	// Create a map for quick client lookup
 	clientMap := make(map[uuid.UUID]*domainUser.User)
 	for i := range clients {
 		clientMap[clients[i].ID] = &clients[i]
 	}
-	
+
 	for i, s := range schedules {
 		response := domainToResponseMapper(&s)
 		if client, exists := clientMap[s.ClientUserID]; exists {
@@ -248,7 +249,7 @@ func (c *Controller) GetScheduleByID(ctx *gin.Context) {
 		return
 	}
 	c.Logger.Info("Successfully retrieved schedule by ID", zap.String("id", scheduleID.String()))
-	
+
 	response := domainToResponseMapper(schedule)
 	response.ClientInfo = clientToResponseMapper(client)
 	ctx.JSON(http.StatusOK, response)
@@ -458,23 +459,23 @@ func (c *Controller) UpdateSchedule(ctx *gin.Context) {
 	}
 
 	updates := make(map[string]interface{})
-	
+
 	if request.ClientUserID != uuid.Nil {
 		updates["client_user_id"] = request.ClientUserID
 	}
-	
+
 	if request.AssignedUserID != uuid.Nil {
 		updates["assigned_user_id"] = request.AssignedUserID
 	}
-	
+
 	if request.ServiceName != "" {
 		updates["service_name"] = request.ServiceName
 	}
-	
+
 	if request.VisitStatus != "" {
 		updates["visit_status"] = request.VisitStatus
 	}
-	
+
 	if request.ScheduledSlot != nil {
 		if request.ScheduledSlot.From.IsZero() || request.ScheduledSlot.To.IsZero() {
 			c.Logger.Error("Both From and To dates must be provided for ScheduledSlot", zap.String("scheduleID", scheduleID.String()))
@@ -482,18 +483,18 @@ func (c *Controller) UpdateSchedule(ctx *gin.Context) {
 			_ = ctx.Error(appError)
 			return
 		}
-		
+
 		if request.ScheduledSlot.From.After(request.ScheduledSlot.To) {
 			c.Logger.Error("ScheduledSlot 'From' cannot be after 'To'", zap.String("scheduleID", scheduleID.String()))
 			appError := domainErrors.NewAppError(errors.New("ScheduledSlot 'From' cannot be after 'To'"), domainErrors.ValidationError)
 			_ = ctx.Error(appError)
 			return
 		}
-		
+
 		updates["scheduled_slot_from"] = request.ScheduledSlot.From
 		updates["scheduled_slot_to"] = request.ScheduledSlot.To
 	}
-	
+
 	if len(updates) == 0 {
 		c.Logger.Warn("No valid fields to update", zap.String("scheduleID", scheduleID.String()))
 		appError := domainErrors.NewAppError(errors.New("No valid fields to update"), domainErrors.ValidationError)
@@ -509,10 +510,10 @@ func (c *Controller) UpdateSchedule(ctx *gin.Context) {
 	}
 
 	_, client, _ := c.scheduleUseCase.GetScheduleWithClientInfo(scheduleID)
-	
+
 	response := domainToResponseMapper(updatedSchedule)
 	response.ClientInfo = clientToResponseMapper(client)
-	
+
 	c.Logger.Info("Schedule updated successfully", zap.String("scheduleID", scheduleID.String()))
 	ctx.JSON(http.StatusOK, UpdateScheduleResponse{
 		Message:  "Schedule updated successfully",

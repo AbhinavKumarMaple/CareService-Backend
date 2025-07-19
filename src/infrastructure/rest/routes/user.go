@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"github.com/gbrayhan/microservices-go/src/infrastructure/rest/controllers/user"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/rest/middlewares"
+	"caregiver/src/infrastructure/rest/controllers/user"
+	"caregiver/src/infrastructure/rest/middlewares"
+
 	"github.com/gin-gonic/gin"
 )
 

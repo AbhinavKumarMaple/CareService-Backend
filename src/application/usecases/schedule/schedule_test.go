@@ -5,21 +5,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gbrayhan/microservices-go/src/domain"
-	domainSchedule "github.com/gbrayhan/microservices-go/src/domain/schedule"
-	domainUser "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
+	"caregiver/src/domain"
+	domainSchedule "caregiver/src/domain/schedule"
+	domainUser "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+
 	"github.com/google/uuid"
 )
 
 // mockScheduleRepository is a mock implementation of the IScheduleRepository interface
 type mockScheduleRepository struct {
-	getSchedulesFn                      func() (*[]domainSchedule.Schedule, error)
-	getScheduleByIDFn                   func(id uuid.UUID) (*domainSchedule.Schedule, error)
-	getTodaySchedulesFn                 func(userID uuid.UUID) (*[]domainSchedule.Schedule, error)
-	updateScheduleFn                    func(id uuid.UUID, updates map[string]interface{}) (*domainSchedule.Schedule, error)
-	updateTaskFn                        func(taskID uuid.UUID, updates map[string]interface{}) (*domainSchedule.Task, error)
-	createFn                            func(newSchedule *domainSchedule.Schedule) (*domainSchedule.Schedule, error)
+	getSchedulesFn                          func() (*[]domainSchedule.Schedule, error)
+	getScheduleByIDFn                       func(id uuid.UUID) (*domainSchedule.Schedule, error)
+	getTodaySchedulesFn                     func(userID uuid.UUID) (*[]domainSchedule.Schedule, error)
+	updateScheduleFn                        func(id uuid.UUID, updates map[string]interface{}) (*domainSchedule.Schedule, error)
+	updateTaskFn                            func(taskID uuid.UUID, updates map[string]interface{}) (*domainSchedule.Task, error)
+	createFn                                func(newSchedule *domainSchedule.Schedule) (*domainSchedule.Schedule, error)
 	getSchedulesByAssignedUserIDPaginatedFn func(assignedUserID uuid.UUID, filters domain.DataFilters) (*domainSchedule.SearchResultSchedule, error)
 }
 
@@ -54,14 +55,14 @@ func (m *mockScheduleRepository) GetSchedulesByAssignedUserIDPaginated(assignedU
 
 // mockUserRepository is a mock implementation of the IUserRepository interface
 type mockUserRepository struct {
-	getAllFn            func() (*[]domainUser.User, error)
-	createFn            func(userDomain *domainUser.User) (*domainUser.User, error)
-	getByIDFn           func(id uuid.UUID) (*domainUser.User, error)
-	getByEmailFn        func(email string) (*domainUser.User, error)
-	updateFn            func(id uuid.UUID, userMap map[string]interface{}) (*domainUser.User, error)
-	deleteFn            func(id uuid.UUID) error
-	searchPaginatedFn   func(filters domain.DataFilters) (*domainUser.SearchResultUser, error)
-	searchByPropertyFn  func(property string, searchText string) (*[]string, error)
+	getAllFn           func() (*[]domainUser.User, error)
+	createFn           func(userDomain *domainUser.User) (*domainUser.User, error)
+	getByIDFn          func(id uuid.UUID) (*domainUser.User, error)
+	getByEmailFn       func(email string) (*domainUser.User, error)
+	updateFn           func(id uuid.UUID, userMap map[string]interface{}) (*domainUser.User, error)
+	deleteFn           func(id uuid.UUID) error
+	searchPaginatedFn  func(filters domain.DataFilters) (*domainUser.SearchResultUser, error)
+	searchByPropertyFn func(property string, searchText string) (*[]string, error)
 }
 
 // Implement all methods of the IUserRepository interface
@@ -110,15 +111,15 @@ func setupLogger(t *testing.T) *logger.Logger {
 func createTestSchedule(id uuid.UUID) *domainSchedule.Schedule {
 	now := time.Now()
 	tomorrow := now.Add(24 * time.Hour)
-	
+
 	clientUserID := uuid.New()
 	assignedUserID := uuid.New()
-	
+
 	task1ID := uuid.New()
 	task2ID := uuid.New()
-	
+
 	done := false
-	
+
 	return &domainSchedule.Schedule{
 		ID:             id,
 		ClientUserID:   clientUserID,
@@ -197,10 +198,10 @@ func TestNewScheduleUseCase(t *testing.T) {
 	mockScheduleRepo := &mockScheduleRepository{}
 	mockUserRepo := &mockUserRepository{}
 	loggerInstance := setupLogger(t)
-	
+
 	// Execute
 	useCase := NewScheduleUseCase(mockScheduleRepo, mockUserRepo, loggerInstance)
-	
+
 	// Verify
 	if useCase == nil {
 		t.Error("expected non-nil usecase")
@@ -220,17 +221,17 @@ func setupTestScheduleUseCase(t *testing.T) (IScheduleUseCase, *mockScheduleRepo
 func TestGetSchedules(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, _, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		expectedSchedules := createTestScheduleList(3)
 		mockScheduleRepo.getSchedulesFn = func() (*[]domainSchedule.Schedule, error) {
 			return expectedSchedules, nil
 		}
-		
+
 		// Execute
 		schedules, err := useCase.GetSchedules()
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -242,16 +243,16 @@ func TestGetSchedules(t *testing.T) {
 			t.Errorf("expected 3 schedules, got %d", len(*schedules))
 		}
 	})
-	
+
 	t.Run("Error", func(t *testing.T) {
 		// Setup mock behavior
 		mockScheduleRepo.getSchedulesFn = func() (*[]domainSchedule.Schedule, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute
 		schedules, err := useCase.GetSchedules()
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -266,27 +267,27 @@ func TestGetSchedules(t *testing.T) {
 func TestGetSchedulesWithClientInfo(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, mockUserRepo, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		expectedSchedules := createTestScheduleList(2)
 		mockScheduleRepo.getSchedulesFn = func() (*[]domainSchedule.Schedule, error) {
 			return expectedSchedules, nil
 		}
-		
+
 		// Create a map of client IDs from the schedules
 		clientIDs := make(map[uuid.UUID]bool)
 		for _, schedule := range *expectedSchedules {
 			clientIDs[schedule.ClientUserID] = true
 		}
-		
+
 		// Create test users for each client ID
 		expectedClients := make([]domainUser.User, 0, len(clientIDs))
 		for clientID := range clientIDs {
 			user := createTestUser(clientID)
 			expectedClients = append(expectedClients, *user)
 		}
-		
+
 		// Setup mock behavior for GetByID
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			for _, client := range expectedClients {
@@ -296,10 +297,10 @@ func TestGetSchedulesWithClientInfo(t *testing.T) {
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		// Execute
 		schedules, clients, err := useCase.GetSchedulesWithClientInfo()
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -317,16 +318,16 @@ func TestGetSchedulesWithClientInfo(t *testing.T) {
 			t.Errorf("expected %d clients, got %d", len(clientIDs), len(*clients))
 		}
 	})
-	
+
 	t.Run("Error getting schedules", func(t *testing.T) {
 		// Setup mock behavior
 		mockScheduleRepo.getSchedulesFn = func() (*[]domainSchedule.Schedule, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute
 		schedules, clients, err := useCase.GetSchedulesWithClientInfo()
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -338,17 +339,17 @@ func TestGetSchedulesWithClientInfo(t *testing.T) {
 			t.Error("expected nil clients")
 		}
 	})
-	
+
 	t.Run("Empty schedules", func(t *testing.T) {
 		// Setup mock behavior
 		emptySchedules := &[]domainSchedule.Schedule{}
 		mockScheduleRepo.getSchedulesFn = func() (*[]domainSchedule.Schedule, error) {
 			return emptySchedules, nil
 		}
-		
+
 		// Execute
 		schedules, clients, err := useCase.GetSchedulesWithClientInfo()
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -372,7 +373,7 @@ func TestGetSchedulesWithClientInfo(t *testing.T) {
 func TestGetScheduleByID(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, _, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
@@ -383,10 +384,10 @@ func TestGetScheduleByID(t *testing.T) {
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		schedule, err := useCase.GetScheduleByID(scheduleID)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -398,16 +399,16 @@ func TestGetScheduleByID(t *testing.T) {
 			t.Errorf("expected schedule ID %s, got %s", scheduleID, schedule.ID)
 		}
 	})
-	
+
 	t.Run("Not found", func(t *testing.T) {
 		// Setup mock behavior
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		schedule, err := useCase.GetScheduleByID(uuid.New())
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -422,36 +423,36 @@ func TestGetScheduleByID(t *testing.T) {
 func TestGetScheduleWithClientInfo(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, mockUserRepo, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
 		clientUserID := uuid.New()
-		
+
 		// Create test schedule with the client user ID
 		expectedSchedule := createTestSchedule(scheduleID)
 		expectedSchedule.ClientUserID = clientUserID
-		
+
 		// Create test client user
 		expectedClient := createTestUser(clientUserID)
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return expectedSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == clientUserID {
 				return expectedClient, nil
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		// Execute
 		schedule, client, err := useCase.GetScheduleWithClientInfo(scheduleID)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -469,16 +470,16 @@ func TestGetScheduleWithClientInfo(t *testing.T) {
 			t.Errorf("expected client ID %s, got %s", clientUserID, client.ID)
 		}
 	})
-	
+
 	t.Run("Schedule not found", func(t *testing.T) {
 		// Setup mock behavior
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		schedule, client, err := useCase.GetScheduleWithClientInfo(uuid.New())
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -490,30 +491,30 @@ func TestGetScheduleWithClientInfo(t *testing.T) {
 			t.Error("expected nil client")
 		}
 	})
-	
+
 	t.Run("Client not found", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
 		clientUserID := uuid.New()
-		
+
 		// Create test schedule with the client user ID
 		expectedSchedule := createTestSchedule(scheduleID)
 		expectedSchedule.ClientUserID = clientUserID
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return expectedSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			return nil, errors.New("user not found")
 		}
-		
+
 		// Execute
 		schedule, client, err := useCase.GetScheduleWithClientInfo(scheduleID)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -534,7 +535,7 @@ func TestGetScheduleWithClientInfo(t *testing.T) {
 func TestStartSchedule(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, _, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
@@ -545,24 +546,24 @@ func TestStartSchedule(t *testing.T) {
 			Lat:  &lat,
 			Long: &long,
 		}
-		
+
 		// Create test schedule
 		originalSchedule := createTestSchedule(scheduleID)
 		originalSchedule.VisitStatus = "upcoming"
-		
+
 		// Create updated schedule
 		updatedSchedule := *originalSchedule
 		updatedSchedule.VisitStatus = "in_progress"
 		updatedSchedule.CheckinTime = &timestamp
 		updatedSchedule.CheckinLocation = location
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return originalSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		mockScheduleRepo.updateScheduleFn = func(id uuid.UUID, updates map[string]interface{}) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				// Verify updates
@@ -578,15 +579,15 @@ func TestStartSchedule(t *testing.T) {
 				if updates["checkin_location_long"] != location.Long {
 					t.Errorf("expected checkin_location_long to be %v, got %v", location.Long, updates["checkin_location_long"])
 				}
-				
+
 				return &updatedSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		result, err := useCase.StartSchedule(scheduleID, timestamp, location)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -613,13 +614,13 @@ func TestStartSchedule(t *testing.T) {
 			t.Errorf("expected checkin_location.Long to be %v, got %v", long, *result.CheckinLocation.Long)
 		}
 	})
-	
+
 	t.Run("Schedule not found", func(t *testing.T) {
 		// Setup mock behavior
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		timestamp := time.Now()
 		lat := 12.345
@@ -629,7 +630,7 @@ func TestStartSchedule(t *testing.T) {
 			Long: &long,
 		}
 		result, err := useCase.StartSchedule(uuid.New(), timestamp, location)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -638,22 +639,22 @@ func TestStartSchedule(t *testing.T) {
 			t.Error("expected nil result")
 		}
 	})
-	
+
 	t.Run("Invalid status", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
-		
+
 		// Create test schedule with invalid status
 		originalSchedule := createTestSchedule(scheduleID)
 		originalSchedule.VisitStatus = "in_progress" // Already in progress
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return originalSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		timestamp := time.Now()
 		lat := 12.345
@@ -663,7 +664,7 @@ func TestStartSchedule(t *testing.T) {
 			Long: &long,
 		}
 		result, err := useCase.StartSchedule(scheduleID, timestamp, location)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -672,26 +673,26 @@ func TestStartSchedule(t *testing.T) {
 			t.Error("expected nil result")
 		}
 	})
-	
+
 	t.Run("Update error", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
-		
+
 		// Create test schedule
 		originalSchedule := createTestSchedule(scheduleID)
 		originalSchedule.VisitStatus = "upcoming"
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return originalSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		mockScheduleRepo.updateScheduleFn = func(id uuid.UUID, updates map[string]interface{}) (*domainSchedule.Schedule, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute
 		timestamp := time.Now()
 		lat := 12.345
@@ -701,7 +702,7 @@ func TestStartSchedule(t *testing.T) {
 			Long: &long,
 		}
 		result, err := useCase.StartSchedule(scheduleID, timestamp, location)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -716,7 +717,7 @@ func TestStartSchedule(t *testing.T) {
 func TestEndSchedule(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, _, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
@@ -727,11 +728,11 @@ func TestEndSchedule(t *testing.T) {
 			Lat:  &lat,
 			Long: &long,
 		}
-		
+
 		// Create test schedule
 		originalSchedule := createTestSchedule(scheduleID)
 		originalSchedule.VisitStatus = "in_progress"
-		
+
 		// Create tasks for update
 		done := true
 		feedback := "Task completed successfully"
@@ -746,20 +747,20 @@ func TestEndSchedule(t *testing.T) {
 				Feedback:    &feedback,
 			},
 		}
-		
+
 		// Create updated schedule
 		updatedSchedule := *originalSchedule
 		updatedSchedule.VisitStatus = "completed"
 		updatedSchedule.CheckoutTime = &timestamp
 		updatedSchedule.CheckoutLocation = location
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return originalSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		mockScheduleRepo.updateScheduleFn = func(id uuid.UUID, updates map[string]interface{}) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				// Verify updates
@@ -775,12 +776,12 @@ func TestEndSchedule(t *testing.T) {
 				if updates["checkout_location_long"] != location.Long {
 					t.Errorf("expected checkout_location_long to be %v, got %v", location.Long, updates["checkout_location_long"])
 				}
-				
+
 				return &updatedSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		mockScheduleRepo.updateTaskFn = func(taskID uuid.UUID, updates map[string]interface{}) (*domainSchedule.Task, error) {
 			// Find the task in the tasks list
 			for _, task := range tasks {
@@ -795,16 +796,16 @@ func TestEndSchedule(t *testing.T) {
 					if updates["feedback"] != task.Feedback {
 						t.Errorf("expected feedback to be %v, got %v", task.Feedback, updates["feedback"])
 					}
-					
+
 					return &task, nil
 				}
 			}
 			return nil, errors.New("task not found")
 		}
-		
+
 		// Execute
 		result, err := useCase.EndSchedule(scheduleID, timestamp, location, tasks)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -831,13 +832,13 @@ func TestEndSchedule(t *testing.T) {
 			t.Errorf("expected checkout_location.Long to be %v, got %v", long, *result.CheckoutLocation.Long)
 		}
 	})
-	
+
 	t.Run("Schedule not found", func(t *testing.T) {
 		// Setup mock behavior
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		timestamp := time.Now()
 		lat := 12.345
@@ -848,7 +849,7 @@ func TestEndSchedule(t *testing.T) {
 		}
 		tasks := []domainSchedule.Task{}
 		result, err := useCase.EndSchedule(uuid.New(), timestamp, location, tasks)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -857,22 +858,22 @@ func TestEndSchedule(t *testing.T) {
 			t.Error("expected nil result")
 		}
 	})
-	
+
 	t.Run("Invalid status", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
-		
+
 		// Create test schedule with invalid status
 		originalSchedule := createTestSchedule(scheduleID)
 		originalSchedule.VisitStatus = "upcoming" // Not in progress
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return originalSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		timestamp := time.Now()
 		lat := 12.345
@@ -883,7 +884,7 @@ func TestEndSchedule(t *testing.T) {
 		}
 		tasks := []domainSchedule.Task{}
 		result, err := useCase.EndSchedule(scheduleID, timestamp, location, tasks)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -892,26 +893,26 @@ func TestEndSchedule(t *testing.T) {
 			t.Error("expected nil result")
 		}
 	})
-	
+
 	t.Run("Update error", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
-		
+
 		// Create test schedule
 		originalSchedule := createTestSchedule(scheduleID)
 		originalSchedule.VisitStatus = "in_progress"
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return originalSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		mockScheduleRepo.updateScheduleFn = func(id uuid.UUID, updates map[string]interface{}) (*domainSchedule.Schedule, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute
 		timestamp := time.Now()
 		lat := 12.345
@@ -922,7 +923,7 @@ func TestEndSchedule(t *testing.T) {
 		}
 		tasks := []domainSchedule.Task{}
 		result, err := useCase.EndSchedule(scheduleID, timestamp, location, tasks)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -937,22 +938,22 @@ func TestEndSchedule(t *testing.T) {
 func TestUpdateTaskStatus(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, _, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		taskID := uuid.New()
 		status := "completed"
 		done := true
 		feedback := "Task completed successfully"
-		
+
 		// Create updated task
 		updatedTask := &domainSchedule.Task{
-			ID:          taskID,
-			Status:      status,
-			Done:        &done,
-			Feedback:    &feedback,
+			ID:       taskID,
+			Status:   status,
+			Done:     &done,
+			Feedback: &feedback,
 		}
-		
+
 		mockScheduleRepo.updateTaskFn = func(id uuid.UUID, updates map[string]interface{}) (*domainSchedule.Task, error) {
 			if id == taskID {
 				// Verify updates
@@ -965,15 +966,15 @@ func TestUpdateTaskStatus(t *testing.T) {
 				if updates["Feedback"] != feedback {
 					t.Errorf("expected Feedback to be %s, got %v", feedback, updates["Feedback"])
 				}
-				
+
 				return updatedTask, nil
 			}
 			return nil, errors.New("task not found")
 		}
-		
+
 		// Execute
 		result, err := useCase.UpdateTaskStatus(taskID, status, done, feedback)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -998,16 +999,16 @@ func TestUpdateTaskStatus(t *testing.T) {
 			t.Errorf("expected Feedback to be %s, got %s", feedback, *result.Feedback)
 		}
 	})
-	
+
 	t.Run("Update error", func(t *testing.T) {
 		// Setup mock behavior
 		mockScheduleRepo.updateTaskFn = func(id uuid.UUID, updates map[string]interface{}) (*domainSchedule.Task, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute
 		result, err := useCase.UpdateTaskStatus(uuid.New(), "completed", true, "feedback")
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1022,26 +1023,26 @@ func TestUpdateTaskStatus(t *testing.T) {
 func TestCreateSchedule(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, mockUserRepo, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
 		clientUserID := uuid.New()
 		assignedUserID := uuid.New()
-		
+
 		// Create test schedule
 		newSchedule := createTestSchedule(uuid.Nil) // ID will be assigned by the repository
 		newSchedule.ClientUserID = clientUserID
 		newSchedule.AssignedUserID = assignedUserID
-		
+
 		// Create client and assigned users
 		clientUser := createTestUser(clientUserID)
 		assignedUser := createTestUser(assignedUserID)
-		
+
 		// Create created schedule (with ID assigned)
 		createdSchedule := *newSchedule
 		createdSchedule.ID = scheduleID
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == clientUserID {
 				return clientUser, nil
@@ -1051,7 +1052,7 @@ func TestCreateSchedule(t *testing.T) {
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.createFn = func(schedule *domainSchedule.Schedule) (*domainSchedule.Schedule, error) {
 			// Verify schedule properties
 			if schedule.ClientUserID != clientUserID {
@@ -1063,7 +1064,7 @@ func TestCreateSchedule(t *testing.T) {
 			if schedule.VisitStatus != "upcoming" {
 				t.Errorf("expected VisitStatus to be 'upcoming', got %s", schedule.VisitStatus)
 			}
-			
+
 			// Verify tasks
 			for _, task := range schedule.Tasks {
 				if task.ID == uuid.Nil {
@@ -1073,13 +1074,13 @@ func TestCreateSchedule(t *testing.T) {
 					t.Errorf("expected task Status to be 'pending', got %s", task.Status)
 				}
 			}
-			
+
 			return &createdSchedule, nil
 		}
-		
+
 		// Execute
 		result, err := useCase.CreateSchedule(newSchedule)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -1100,27 +1101,27 @@ func TestCreateSchedule(t *testing.T) {
 			t.Errorf("expected VisitStatus 'upcoming', got %s", result.VisitStatus)
 		}
 	})
-	
+
 	t.Run("Client user not found", func(t *testing.T) {
 		// Setup mock behavior
 		clientUserID := uuid.New()
 		assignedUserID := uuid.New()
-		
+
 		// Create test schedule
 		newSchedule := createTestSchedule(uuid.Nil)
 		newSchedule.ClientUserID = clientUserID
 		newSchedule.AssignedUserID = assignedUserID
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == clientUserID {
 				return nil, errors.New("user not found")
 			}
 			return createTestUser(id), nil
 		}
-		
+
 		// Execute
 		result, err := useCase.CreateSchedule(newSchedule)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1129,17 +1130,17 @@ func TestCreateSchedule(t *testing.T) {
 			t.Error("expected nil result")
 		}
 	})
-	
+
 	t.Run("Assigned user not found", func(t *testing.T) {
 		// Setup mock behavior
 		clientUserID := uuid.New()
 		assignedUserID := uuid.New()
-		
+
 		// Create test schedule
 		newSchedule := createTestSchedule(uuid.Nil)
 		newSchedule.ClientUserID = clientUserID
 		newSchedule.AssignedUserID = assignedUserID
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == clientUserID {
 				return createTestUser(id), nil
@@ -1149,10 +1150,10 @@ func TestCreateSchedule(t *testing.T) {
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		// Execute
 		result, err := useCase.CreateSchedule(newSchedule)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1161,28 +1162,28 @@ func TestCreateSchedule(t *testing.T) {
 			t.Error("expected nil result")
 		}
 	})
-	
+
 	t.Run("Create error", func(t *testing.T) {
 		// Setup mock behavior
 		clientUserID := uuid.New()
 		assignedUserID := uuid.New()
-		
+
 		// Create test schedule
 		newSchedule := createTestSchedule(uuid.Nil)
 		newSchedule.ClientUserID = clientUserID
 		newSchedule.AssignedUserID = assignedUserID
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			return createTestUser(id), nil
 		}
-		
+
 		mockScheduleRepo.createFn = func(schedule *domainSchedule.Schedule) (*domainSchedule.Schedule, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute
 		result, err := useCase.CreateSchedule(newSchedule)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1197,29 +1198,29 @@ func TestCreateSchedule(t *testing.T) {
 func TestGetTodaySchedules(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, mockUserRepo, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		userID := uuid.New()
 		expectedSchedules := createTestScheduleList(2)
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == userID {
 				return createTestUser(userID), nil
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.getTodaySchedulesFn = func(id uuid.UUID) (*[]domainSchedule.Schedule, error) {
 			if id == userID {
 				return expectedSchedules, nil
 			}
 			return nil, errors.New("schedules not found")
 		}
-		
+
 		// Execute
 		schedules, err := useCase.GetTodaySchedules(userID)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -1231,18 +1232,18 @@ func TestGetTodaySchedules(t *testing.T) {
 			t.Errorf("expected 2 schedules, got %d", len(*schedules))
 		}
 	})
-	
+
 	t.Run("User not found", func(t *testing.T) {
 		// Setup mock behavior
 		userID := uuid.New()
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			return nil, errors.New("user not found")
 		}
-		
+
 		// Execute
 		schedules, err := useCase.GetTodaySchedules(userID)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1251,25 +1252,25 @@ func TestGetTodaySchedules(t *testing.T) {
 			t.Error("expected nil schedules")
 		}
 	})
-	
+
 	t.Run("Repository error", func(t *testing.T) {
 		// Setup mock behavior
 		userID := uuid.New()
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == userID {
 				return createTestUser(userID), nil
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.getTodaySchedulesFn = func(id uuid.UUID) (*[]domainSchedule.Schedule, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute
 		schedules, err := useCase.GetTodaySchedules(userID)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1284,24 +1285,24 @@ func TestGetTodaySchedules(t *testing.T) {
 func TestGetTodaySchedulesWithClientInfo(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, mockUserRepo, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		userID := uuid.New()
 		clientID1 := uuid.New()
 		clientID2 := uuid.New()
-		
+
 		// Create test schedules with different client IDs
 		schedules := make([]domainSchedule.Schedule, 2)
 		schedules[0] = *createTestSchedule(uuid.New())
 		schedules[0].ClientUserID = clientID1
 		schedules[1] = *createTestSchedule(uuid.New())
 		schedules[1].ClientUserID = clientID2
-		
+
 		// Create test clients
 		client1 := createTestUser(clientID1)
 		client2 := createTestUser(clientID2)
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == userID {
 				return createTestUser(userID), nil
@@ -1314,17 +1315,17 @@ func TestGetTodaySchedulesWithClientInfo(t *testing.T) {
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.getTodaySchedulesFn = func(id uuid.UUID) (*[]domainSchedule.Schedule, error) {
 			if id == userID {
 				return &schedules, nil
 			}
 			return nil, errors.New("schedules not found")
 		}
-		
+
 		// Execute
 		resultSchedules, resultClients, err := useCase.GetTodaySchedulesWithClientInfo(userID)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -1342,25 +1343,25 @@ func TestGetTodaySchedulesWithClientInfo(t *testing.T) {
 			t.Errorf("expected 2 clients, got %d", len(*resultClients))
 		}
 	})
-	
+
 	t.Run("Error getting schedules", func(t *testing.T) {
 		// Setup mock behavior
 		userID := uuid.New()
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == userID {
 				return createTestUser(userID), nil
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.getTodaySchedulesFn = func(id uuid.UUID) (*[]domainSchedule.Schedule, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute
 		schedules, clients, err := useCase.GetTodaySchedulesWithClientInfo(userID)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1372,29 +1373,29 @@ func TestGetTodaySchedulesWithClientInfo(t *testing.T) {
 			t.Error("expected nil clients")
 		}
 	})
-	
+
 	t.Run("Empty schedules", func(t *testing.T) {
 		// Setup mock behavior
 		userID := uuid.New()
 		emptySchedules := &[]domainSchedule.Schedule{}
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == userID {
 				return createTestUser(userID), nil
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.getTodaySchedulesFn = func(id uuid.UUID) (*[]domainSchedule.Schedule, error) {
 			if id == userID {
 				return emptySchedules, nil
 			}
 			return nil, errors.New("schedules not found")
 		}
-		
+
 		// Execute
 		schedules, clients, err := useCase.GetTodaySchedulesWithClientInfo(userID)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -1418,23 +1419,23 @@ func TestGetTodaySchedulesWithClientInfo(t *testing.T) {
 func TestUpdateSchedule(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, mockUserRepo, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
 		clientUserID := uuid.New()
 		assignedUserID := uuid.New()
-		
+
 		// Create test schedule
 		originalSchedule := createTestSchedule(scheduleID)
-		
+
 		// Create updated schedule
 		updatedSchedule := *originalSchedule
 		updatedSchedule.ClientUserID = clientUserID
 		updatedSchedule.AssignedUserID = assignedUserID
 		updatedSchedule.ServiceName = "Updated Service"
 		updatedSchedule.VisitStatus = "cancelled"
-		
+
 		// Create updates map
 		updates := map[string]interface{}{
 			"client_user_id":   clientUserID,
@@ -1442,21 +1443,21 @@ func TestUpdateSchedule(t *testing.T) {
 			"service_name":     "Updated Service",
 			"visit_status":     "cancelled",
 		}
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return originalSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == clientUserID || id == assignedUserID {
 				return createTestUser(id), nil
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.updateScheduleFn = func(id uuid.UUID, u map[string]interface{}) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				// Verify updates
@@ -1469,10 +1470,10 @@ func TestUpdateSchedule(t *testing.T) {
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		result, err := useCase.UpdateSchedule(scheduleID, updates)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -1496,21 +1497,21 @@ func TestUpdateSchedule(t *testing.T) {
 			t.Errorf("expected VisitStatus 'cancelled', got %s", result.VisitStatus)
 		}
 	})
-	
+
 	t.Run("Schedule not found", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		updates := map[string]interface{}{
 			"service_name": "Updated Service",
 		}
 		result, err := useCase.UpdateSchedule(scheduleID, updates)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1519,34 +1520,34 @@ func TestUpdateSchedule(t *testing.T) {
 			t.Error("expected nil result")
 		}
 	})
-	
+
 	t.Run("Client user not found", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
 		clientUserID := uuid.New()
-		
+
 		// Create test schedule
 		originalSchedule := createTestSchedule(scheduleID)
-		
+
 		// Create updates map
 		updates := map[string]interface{}{
 			"client_user_id": clientUserID,
 		}
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return originalSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			return nil, errors.New("user not found")
 		}
-		
+
 		// Execute
 		result, err := useCase.UpdateSchedule(scheduleID, updates)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1555,29 +1556,29 @@ func TestUpdateSchedule(t *testing.T) {
 			t.Error("expected nil result")
 		}
 	})
-	
+
 	t.Run("Invalid visit status", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
-		
+
 		// Create test schedule
 		originalSchedule := createTestSchedule(scheduleID)
-		
+
 		// Create updates map with invalid status
 		updates := map[string]interface{}{
 			"visit_status": "invalid_status",
 		}
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return originalSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		result, err := useCase.UpdateSchedule(scheduleID, updates)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1586,30 +1587,30 @@ func TestUpdateSchedule(t *testing.T) {
 			t.Error("expected nil result")
 		}
 	})
-	
+
 	t.Run("Cannot change from completed status", func(t *testing.T) {
 		// Setup mock behavior
 		scheduleID := uuid.New()
-		
+
 		// Create test schedule with completed status
 		originalSchedule := createTestSchedule(scheduleID)
 		originalSchedule.VisitStatus = "completed"
-		
+
 		// Create updates map trying to change status
 		updates := map[string]interface{}{
 			"visit_status": "cancelled",
 		}
-		
+
 		mockScheduleRepo.getScheduleByIDFn = func(id uuid.UUID) (*domainSchedule.Schedule, error) {
 			if id == scheduleID {
 				return originalSchedule, nil
 			}
 			return nil, errors.New("schedule not found")
 		}
-		
+
 		// Execute
 		result, err := useCase.UpdateSchedule(scheduleID, updates)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1624,19 +1625,19 @@ func TestUpdateSchedule(t *testing.T) {
 func TestGetTodaySchedulesByAssignedUserID(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, mockUserRepo, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		assignedUserID := uuid.New()
 		expectedSchedules := createTestScheduleList(2)
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == assignedUserID {
 				return createTestUser(assignedUserID), nil
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.getSchedulesByAssignedUserIDPaginatedFn = func(id uuid.UUID, filters domain.DataFilters) (*domainSchedule.SearchResultSchedule, error) {
 			if id == assignedUserID {
 				return &domainSchedule.SearchResultSchedule{
@@ -1649,10 +1650,10 @@ func TestGetTodaySchedulesByAssignedUserID(t *testing.T) {
 			}
 			return nil, errors.New("schedules not found")
 		}
-		
+
 		// Execute
 		schedules, err := useCase.GetTodaySchedulesByAssignedUserID(assignedUserID)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -1664,18 +1665,18 @@ func TestGetTodaySchedulesByAssignedUserID(t *testing.T) {
 			t.Errorf("expected 2 schedules, got %d", len(*schedules))
 		}
 	})
-	
+
 	t.Run("User not found", func(t *testing.T) {
 		// Setup mock behavior
 		assignedUserID := uuid.New()
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			return nil, errors.New("user not found")
 		}
-		
+
 		// Execute
 		schedules, err := useCase.GetTodaySchedulesByAssignedUserID(assignedUserID)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1684,25 +1685,25 @@ func TestGetTodaySchedulesByAssignedUserID(t *testing.T) {
 			t.Error("expected nil schedules")
 		}
 	})
-	
+
 	t.Run("Repository error", func(t *testing.T) {
 		// Setup mock behavior
 		assignedUserID := uuid.New()
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == assignedUserID {
 				return createTestUser(assignedUserID), nil
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.getSchedulesByAssignedUserIDPaginatedFn = func(id uuid.UUID, filters domain.DataFilters) (*domainSchedule.SearchResultSchedule, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute
 		schedules, err := useCase.GetTodaySchedulesByAssignedUserID(assignedUserID)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1717,13 +1718,13 @@ func TestGetTodaySchedulesByAssignedUserID(t *testing.T) {
 func TestGetTodaySchedulesByAssignedUserIDWithClientInfo(t *testing.T) {
 	// Setup
 	useCase, mockScheduleRepo, mockUserRepo, _ := setupTestScheduleUseCase(t)
-	
+
 	t.Run("Success", func(t *testing.T) {
 		// Setup mock behavior
 		assignedUserID := uuid.New()
 		clientID1 := uuid.New()
 		clientID2 := uuid.New()
-		
+
 		// Create test schedules with different client IDs
 		schedules := make([]domainSchedule.Schedule, 2)
 		schedules[0] = *createTestSchedule(uuid.New())
@@ -1732,11 +1733,11 @@ func TestGetTodaySchedulesByAssignedUserIDWithClientInfo(t *testing.T) {
 		schedules[1] = *createTestSchedule(uuid.New())
 		schedules[1].ClientUserID = clientID2
 		schedules[1].AssignedUserID = assignedUserID
-		
+
 		// Create test clients
 		client1 := createTestUser(clientID1)
 		client2 := createTestUser(clientID2)
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == assignedUserID {
 				return createTestUser(assignedUserID), nil
@@ -1749,7 +1750,7 @@ func TestGetTodaySchedulesByAssignedUserIDWithClientInfo(t *testing.T) {
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.getSchedulesByAssignedUserIDPaginatedFn = func(id uuid.UUID, filters domain.DataFilters) (*domainSchedule.SearchResultSchedule, error) {
 			if id == assignedUserID {
 				return &domainSchedule.SearchResultSchedule{
@@ -1762,10 +1763,10 @@ func TestGetTodaySchedulesByAssignedUserIDWithClientInfo(t *testing.T) {
 			}
 			return nil, errors.New("schedules not found")
 		}
-		
+
 		// Execute
 		resultSchedules, resultClients, err := useCase.GetTodaySchedulesByAssignedUserIDWithClientInfo(assignedUserID)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -1783,25 +1784,25 @@ func TestGetTodaySchedulesByAssignedUserIDWithClientInfo(t *testing.T) {
 			t.Errorf("expected 2 clients, got %d", len(*resultClients))
 		}
 	})
-	
+
 	t.Run("Error getting schedules", func(t *testing.T) {
 		// Setup mock behavior
 		assignedUserID := uuid.New()
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == assignedUserID {
 				return createTestUser(assignedUserID), nil
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.getSchedulesByAssignedUserIDPaginatedFn = func(id uuid.UUID, filters domain.DataFilters) (*domainSchedule.SearchResultSchedule, error) {
 			return nil, errors.New("database error")
 		}
-		
+
 		// Execute
 		schedules, clients, err := useCase.GetTodaySchedulesByAssignedUserIDWithClientInfo(assignedUserID)
-		
+
 		// Verify
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -1813,19 +1814,19 @@ func TestGetTodaySchedulesByAssignedUserIDWithClientInfo(t *testing.T) {
 			t.Error("expected nil clients")
 		}
 	})
-	
+
 	t.Run("Empty schedules", func(t *testing.T) {
 		// Setup mock behavior
 		assignedUserID := uuid.New()
 		emptySchedules := &[]domainSchedule.Schedule{}
-		
+
 		mockUserRepo.getByIDFn = func(id uuid.UUID) (*domainUser.User, error) {
 			if id == assignedUserID {
 				return createTestUser(assignedUserID), nil
 			}
 			return nil, errors.New("user not found")
 		}
-		
+
 		mockScheduleRepo.getSchedulesByAssignedUserIDPaginatedFn = func(id uuid.UUID, filters domain.DataFilters) (*domainSchedule.SearchResultSchedule, error) {
 			if id == assignedUserID {
 				return &domainSchedule.SearchResultSchedule{
@@ -1838,10 +1839,10 @@ func TestGetTodaySchedulesByAssignedUserIDWithClientInfo(t *testing.T) {
 			}
 			return nil, errors.New("schedules not found")
 		}
-		
+
 		// Execute
 		schedules, clients, err := useCase.GetTodaySchedulesByAssignedUserIDWithClientInfo(assignedUserID)
-		
+
 		// Verify
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)

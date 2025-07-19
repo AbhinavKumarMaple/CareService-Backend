@@ -3,23 +3,24 @@ package user
 import (
 	"time"
 
-	"github.com/gbrayhan/microservices-go/src/domain"
+	"caregiver/src/domain"
+
 	"github.com/google/uuid"
 )
 
 type User struct {
-	ID            uuid.UUID `gorm:"primaryKey"`
-	UserName      string    `gorm:"column:user_name;unique"`
-	Email         string    `gorm:"unique"`
-	FirstName     string    `gorm:"column:first_name"`
-	LastName      string    `gorm:"column:last_name"`
-	Status        bool      `gorm:"column:status"`
-	HashPassword  string    `gorm:"column:hash_password"`
-	Role          string    `gorm:"column:role"` 
+	ID             uuid.UUID `gorm:"primaryKey"`
+	UserName       string    `gorm:"column:user_name;unique"`
+	Email          string    `gorm:"unique"`
+	FirstName      string    `gorm:"column:first_name"`
+	LastName       string    `gorm:"column:last_name"`
+	Status         bool      `gorm:"column:status"`
+	HashPassword   string    `gorm:"column:hash_password"`
+	Role           string    `gorm:"column:role"`
 	ProfilePicture string    `gorm:"column:profile_picture"`
-	Location      Location `gorm:"embedded;embeddedPrefix:location_"`
-	CreatedAt     time.Time `gorm:"autoCreateTime:milli"`
-	UpdatedAt     time.Time `gorm:"autoUpdateTime:milli"`
+	Location       Location  `gorm:"embedded;embeddedPrefix:location_"`
+	CreatedAt      time.Time `gorm:"autoCreateTime:milli"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime:milli"`
 }
 
 type Location struct {

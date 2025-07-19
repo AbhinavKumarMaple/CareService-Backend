@@ -4,7 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	domainErrors "github.com/gbrayhan/microservices-go/src/domain/errors"
+	domainErrors "caregiver/src/domain/errors"
+
 	"github.com/gin-gonic/gin"
 )
 

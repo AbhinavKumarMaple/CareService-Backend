@@ -3,10 +3,11 @@ package auth
 import (
 	"net/http"
 
-	useCaseAuth "github.com/gbrayhan/microservices-go/src/application/usecases/auth"
-	domainErrors "github.com/gbrayhan/microservices-go/src/domain/errors"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/rest/controllers"
+	useCaseAuth "caregiver/src/application/usecases/auth"
+	domainErrors "caregiver/src/domain/errors"
+	logger "caregiver/src/infrastructure/logger"
+	"caregiver/src/infrastructure/rest/controllers"
+
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )

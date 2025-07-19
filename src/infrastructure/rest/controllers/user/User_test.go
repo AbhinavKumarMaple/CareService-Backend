@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gbrayhan/microservices-go/src/domain"
-	domainUser "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
+	"caregiver/src/domain"
+	domainUser "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -152,7 +153,7 @@ func TestToUsecaseMapper(t *testing.T) {
 		Email:     "test@example.com",
 		FirstName: "Test",
 		LastName:  "User",
-		Role: "user",
+		Role:      "user",
 		Location: LocationRequest{
 			HouseNumber: "1",
 			Street:      "Main St",
@@ -298,7 +299,7 @@ func TestUserController_NewUser(t *testing.T) {
 
 		controller.NewUser(c)
 
-		assert.Equal(t, http.StatusOK, w.Code) 
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
 	t.Run("Service Error", func(t *testing.T) {
@@ -308,8 +309,8 @@ func TestUserController_NewUser(t *testing.T) {
 			Email:     "test@example.com",
 			FirstName: "Test",
 			LastName:  "User",
-			Role: "user",
-			Location: LocationRequest{HouseNumber: "1", Street: "Main St"},
+			Role:      "user",
+			Location:  LocationRequest{HouseNumber: "1", Street: "Main St"},
 		}
 		jsonData, _ := json.Marshal(request)
 		c.Request = httptest.NewRequest("POST", "/users", bytes.NewBuffer(jsonData))
@@ -319,7 +320,7 @@ func TestUserController_NewUser(t *testing.T) {
 
 		controller.NewUser(c)
 
-		assert.Equal(t, http.StatusOK, w.Code) 
+		assert.Equal(t, http.StatusOK, w.Code)
 		mockService.AssertExpectations(t)
 	})
 }
@@ -354,7 +355,7 @@ func TestUserController_GetAllUsers(t *testing.T) {
 
 		controller.GetAllUsers(c)
 
-		assert.Equal(t, http.StatusOK, w.Code) 
+		assert.Equal(t, http.StatusOK, w.Code)
 		mockService.AssertExpectations(t)
 	})
 }
@@ -391,7 +392,7 @@ func TestUserController_GetUsersByID(t *testing.T) {
 
 		controller.GetUsersByID(c)
 
-		assert.Equal(t, http.StatusOK, w.Code) 
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
 	t.Run("Service Error", func(t *testing.T) {
@@ -447,7 +448,7 @@ func TestUserController_UpdateUser(t *testing.T) {
 
 		controller.UpdateUser(c)
 
-		assert.Equal(t, http.StatusOK, w.Code) 
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
 	t.Run("Invalid JSON", func(t *testing.T) {
@@ -459,7 +460,7 @@ func TestUserController_UpdateUser(t *testing.T) {
 
 		controller.UpdateUser(c)
 
-		assert.Equal(t, http.StatusOK, w.Code) 
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
 	t.Run("Service Error", func(t *testing.T) {
@@ -475,7 +476,7 @@ func TestUserController_UpdateUser(t *testing.T) {
 
 		controller.UpdateUser(c)
 
-		assert.Equal(t, http.StatusOK, w.Code) 
+		assert.Equal(t, http.StatusOK, w.Code)
 		mockService.AssertExpectations(t)
 	})
 }
@@ -506,7 +507,7 @@ func TestUserController_DeleteUser(t *testing.T) {
 
 		controller.DeleteUser(c)
 
-		assert.Equal(t, http.StatusOK, w.Code) 
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
 	t.Run("Service Error", func(t *testing.T) {
@@ -519,7 +520,7 @@ func TestUserController_DeleteUser(t *testing.T) {
 
 		controller.DeleteUser(c)
 
-		assert.Equal(t, http.StatusOK, w.Code) 
+		assert.Equal(t, http.StatusOK, w.Code)
 		mockService.AssertExpectations(t)
 	})
 }

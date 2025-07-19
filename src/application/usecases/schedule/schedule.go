@@ -4,11 +4,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/gbrayhan/microservices-go/src/domain"
-	domainErrors "github.com/gbrayhan/microservices-go/src/domain/errors"
-	domainSchedule "github.com/gbrayhan/microservices-go/src/domain/schedule"
-	domainUser "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
+	"caregiver/src/domain"
+	domainErrors "caregiver/src/domain/errors"
+	domainSchedule "caregiver/src/domain/schedule"
+	domainUser "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -23,7 +24,7 @@ type IScheduleUseCase interface {
 	StartSchedule(scheduleID uuid.UUID, timestamp time.Time, location domainSchedule.Location) (*domainSchedule.Schedule, error)
 	EndSchedule(scheduleID uuid.UUID, timestamp time.Time, location domainSchedule.Location, tasks []domainSchedule.Task) (*domainSchedule.Schedule, error)
 	UpdateTaskStatus(taskID uuid.UUID, status string, done bool, feedback string) (*domainSchedule.Task, error)
-	UpdateSchedule(scheduleID uuid.UUID, updates map[string]interface{}) (*domainSchedule.Schedule, error) 
+	UpdateSchedule(scheduleID uuid.UUID, updates map[string]interface{}) (*domainSchedule.Schedule, error)
 	CreateSchedule(newSchedule *domainSchedule.Schedule) (*domainSchedule.Schedule, error)
 	GetTodaySchedulesByAssignedUserID(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, error)
 	GetTodaySchedulesByAssignedUserIDWithClientInfo(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, *[]domainUser.User, error)
@@ -32,7 +33,7 @@ type IScheduleUseCase interface {
 
 type ScheduleUseCase struct {
 	scheduleRepository domainSchedule.IScheduleRepository
-	userRepository     domainUser.IUserRepository 
+	userRepository     domainUser.IUserRepository
 	Logger             *logger.Logger
 }
 
@@ -81,7 +82,7 @@ func (s *ScheduleUseCase) StartSchedule(scheduleID uuid.UUID, timestamp time.Tim
 
 	// Check if the current time is before the scheduled start time
 	if timestamp.Before(schedule.ScheduledSlot.From) {
-		s.Logger.Warn("Cannot start schedule before scheduled time", 
+		s.Logger.Warn("Cannot start schedule before scheduled time",
 			zap.String("scheduleID", scheduleID.String()),
 			zap.Time("currentTime", timestamp),
 			zap.Time("scheduledStartTime", schedule.ScheduledSlot.From))
@@ -96,16 +97,16 @@ func (s *ScheduleUseCase) StartSchedule(scheduleID uuid.UUID, timestamp time.Tim
 	}
 
 	if schedulesInProgress != nil && len(*schedulesInProgress) > 0 {
-		s.Logger.Warn("Cannot start schedule, another schedule is already in progress", 
-			zap.String("scheduleID", scheduleID.String()), 
+		s.Logger.Warn("Cannot start schedule, another schedule is already in progress",
+			zap.String("scheduleID", scheduleID.String()),
 			zap.String("assignedUserID", schedule.AssignedUserID.String()),
 			zap.Int("inProgressCount", len(*schedulesInProgress)))
 		return nil, domainErrors.NewAppError(errors.New("cannot start schedule: another schedule is already in progress for this user"), domainErrors.ValidationError)
 	}
 
 	updates := map[string]interface{}{
-		"visit_status":      "in_progress",
-		"checkin_time":      timestamp,
+		"visit_status":          "in_progress",
+		"checkin_time":          timestamp,
 		"checkin_location_lat":  location.Lat,
 		"checkin_location_long": location.Long,
 	}
@@ -134,8 +135,8 @@ func (s *ScheduleUseCase) EndSchedule(scheduleID uuid.UUID, timestamp time.Time,
 	}
 
 	updates := map[string]interface{}{
-		"visit_status":      "completed",
-		"checkout_time":     timestamp,
+		"visit_status":           "completed",
+		"checkout_time":          timestamp,
 		"checkout_location_lat":  location.Lat,
 		"checkout_location_long": location.Long,
 	}
@@ -154,7 +155,7 @@ func (s *ScheduleUseCase) EndSchedule(scheduleID uuid.UUID, timestamp time.Time,
 		})
 		if err != nil {
 			s.Logger.Error("Error updating task during EndSchedule", zap.Error(err), zap.String("taskID", task.ID.String()))
-			
+
 		}
 	}
 	if err != nil {
@@ -204,7 +205,7 @@ func (s *ScheduleUseCase) CreateSchedule(newSchedule *domainSchedule.Schedule) (
 		if newSchedule.Tasks[i].ID == uuid.Nil {
 			newSchedule.Tasks[i].ID = uuid.New()
 		}
-		newSchedule.Tasks[i].Status = "pending" 
+		newSchedule.Tasks[i].Status = "pending"
 	}
 
 	createdSchedule, err := s.scheduleRepository.Create(newSchedule)
@@ -233,14 +234,13 @@ func (s *ScheduleUseCase) GetTodaySchedulesByAssignedUserID(assignedUserID uuid.
 	filters := domain.DataFilters{
 		DateRangeFilters: []domain.DateRangeFilter{
 			{
-				Field: "scheduled_slot_from", 
+				Field: "scheduled_slot_from",
 				Start: &todayStart,
 				End:   &todayEnd,
 			},
 		},
 	}
 
-	
 	schedulesResult, err := s.scheduleRepository.GetSchedulesByAssignedUserIDPaginated(assignedUserID, filters)
 	if err != nil {
 		s.Logger.Error("Error retrieving today's schedules by assigned user ID from repository", zap.Error(err), zap.String("assignedUserID", assignedUserID.String()))
@@ -252,7 +252,7 @@ func (s *ScheduleUseCase) GetTodaySchedulesByAssignedUserID(assignedUserID uuid.
 
 func (s *ScheduleUseCase) GetScheduleWithClientInfo(id uuid.UUID) (*domainSchedule.Schedule, *domainUser.User, error) {
 	s.Logger.Info("Getting schedule with client info by ID", zap.String("id", id.String()))
-	
+
 	schedule, err := s.scheduleRepository.GetScheduleByID(id)
 	if err != nil {
 		s.Logger.Error("Schedule not found", zap.Error(err), zap.String("id", id.String()))
@@ -262,7 +262,7 @@ func (s *ScheduleUseCase) GetScheduleWithClientInfo(id uuid.UUID) (*domainSchedu
 	client, err := s.userRepository.GetByID(schedule.ClientUserID)
 	if err != nil {
 		s.Logger.Error("Client user not found", zap.Error(err), zap.String("clientUserID", schedule.ClientUserID.String()))
-		return schedule, nil, nil 
+		return schedule, nil, nil
 	}
 
 	return schedule, client, nil
@@ -270,7 +270,7 @@ func (s *ScheduleUseCase) GetScheduleWithClientInfo(id uuid.UUID) (*domainSchedu
 
 func (s *ScheduleUseCase) GetTodaySchedulesWithClientInfo(userID uuid.UUID) (*[]domainSchedule.Schedule, *[]domainUser.User, error) {
 	s.Logger.Info("Getting today's schedules with client info for user", zap.String("userID", userID.String()))
-	
+
 	schedules, err := s.GetTodaySchedules(userID)
 	if err != nil {
 		return nil, nil, err
@@ -300,7 +300,7 @@ func (s *ScheduleUseCase) GetTodaySchedulesWithClientInfo(userID uuid.UUID) (*[]
 
 func (s *ScheduleUseCase) GetTodaySchedulesByAssignedUserIDWithClientInfo(assignedUserID uuid.UUID) (*[]domainSchedule.Schedule, *[]domainUser.User, error) {
 	s.Logger.Info("Getting today's schedules with client info by assigned user ID", zap.String("assignedUserID", assignedUserID.String()))
-	
+
 	schedules, err := s.GetTodaySchedulesByAssignedUserID(assignedUserID)
 	if err != nil {
 		return nil, nil, err
@@ -330,7 +330,7 @@ func (s *ScheduleUseCase) GetTodaySchedulesByAssignedUserIDWithClientInfo(assign
 
 func (s *ScheduleUseCase) GetSchedulesWithClientInfo() (*[]domainSchedule.Schedule, *[]domainUser.User, error) {
 	s.Logger.Info("Getting all schedules with client info")
-	
+
 	schedules, err := s.scheduleRepository.GetSchedules()
 	if err != nil {
 		s.Logger.Error("Error getting all schedules", zap.Error(err))
@@ -391,19 +391,19 @@ func (s *ScheduleUseCase) UpdateSchedule(scheduleID uuid.UUID, updates map[strin
 			"completed":   true,
 			"cancelled":   true,
 		}
-		
+
 		if !validStatuses[status] {
 			s.Logger.Error("Invalid visit status", zap.String("status", status))
 			return nil, domainErrors.NewAppError(errors.New("invalid visit status"), domainErrors.ValidationError)
 		}
-		
+
 		currentStatus := existingSchedule.VisitStatus
-		
+
 		if currentStatus == "completed" && status != "completed" {
 			s.Logger.Error("Cannot change status from completed", zap.String("currentStatus", currentStatus), zap.String("newStatus", status))
 			return nil, domainErrors.NewAppError(errors.New("cannot change status from completed"), domainErrors.ValidationError)
 		}
-		
+
 		if currentStatus == "cancelled" && status != "cancelled" {
 			s.Logger.Error("Cannot change status from cancelled", zap.String("currentStatus", currentStatus), zap.String("newStatus", status))
 			return nil, domainErrors.NewAppError(errors.New("cannot change status from cancelled"), domainErrors.ValidationError)
@@ -415,7 +415,7 @@ func (s *ScheduleUseCase) UpdateSchedule(scheduleID uuid.UUID, updates map[strin
 		s.Logger.Error("Error updating schedule", zap.Error(err), zap.String("scheduleID", scheduleID.String()))
 		return nil, err
 	}
-	
+
 	s.Logger.Info("Schedule updated successfully", zap.String("scheduleID", scheduleID.String()))
 	return updatedSchedule, nil
 }

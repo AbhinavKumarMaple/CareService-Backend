@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	domainUser "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+
 	"github.com/DATA-DOG/go-sqlmock"
-	domainUser "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -128,7 +129,7 @@ func TestRepository_GetByID(t *testing.T) {
 	user, err = repo.GetByID(id2)
 	assert.Error(t, err)
 	assert.NotNil(t, user)
-	assert.Equal(t, uuid.Nil, user.ID) 
+	assert.Equal(t, uuid.Nil, user.ID)
 }
 
 func TestRepository_Create(t *testing.T) {
@@ -202,7 +203,5 @@ func TestRepository_GetByEmail(t *testing.T) {
 	user, err = repo.GetByEmail(emailNotFound)
 	assert.Error(t, err)
 	assert.NotNil(t, user)
-	assert.Equal(t, uuid.Nil, user.ID) 
+	assert.Equal(t, uuid.Nil, user.ID)
 }
-
-

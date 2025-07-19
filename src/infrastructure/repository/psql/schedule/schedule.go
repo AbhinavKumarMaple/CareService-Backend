@@ -4,45 +4,46 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/gbrayhan/microservices-go/src/domain"
-	domainErrors "github.com/gbrayhan/microservices-go/src/domain/errors"
-	domainSchedule "github.com/gbrayhan/microservices-go/src/domain/schedule"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
+	"caregiver/src/domain"
+	domainErrors "caregiver/src/domain/errors"
+	domainSchedule "caregiver/src/domain/schedule"
+	logger "caregiver/src/infrastructure/logger"
+
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type Schedule struct {
-	ID               uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	ClientUserID     uuid.UUID `gorm:"column:client_user_id;type:uuid"`
-	AssignedUserID   uuid.UUID `gorm:"column:assigned_user_id;type:uuid"` 
-	ServiceName      string    `gorm:"column:service_name"`               
-	ScheduledSlotFrom time.Time `gorm:"column:scheduled_slot_from"`
-	ScheduledSlotTo   time.Time `gorm:"column:scheduled_slot_to"`
-	VisitStatus      string    `gorm:"column:visit_status"`
-	CheckinTime      *time.Time `gorm:"column:checkin_time"`
-	CheckoutTime     *time.Time `gorm:"column:checkout_time"`
-	CheckinLocationLat  *float64 `gorm:"column:checkin_location_lat"`
-	CheckinLocationLong *float64 `gorm:"column:checkin_location_long"`
-	CheckoutLocationLat  *float64 `gorm:"column:checkout_location_lat"`
-	CheckoutLocationLong *float64 `gorm:"column:checkout_location_long"`
-	Tasks            []Task    `gorm:"foreignKey:ScheduleID"`
-	ServiceNote      *string   `gorm:"column:service_note"`
-	CreatedAt        time.Time `gorm:"autoCreateTime:milli"`
-	UpdatedAt        time.Time `gorm:"autoUpdateTime:milli"`
+	ID                   uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ClientUserID         uuid.UUID  `gorm:"column:client_user_id;type:uuid"`
+	AssignedUserID       uuid.UUID  `gorm:"column:assigned_user_id;type:uuid"`
+	ServiceName          string     `gorm:"column:service_name"`
+	ScheduledSlotFrom    time.Time  `gorm:"column:scheduled_slot_from"`
+	ScheduledSlotTo      time.Time  `gorm:"column:scheduled_slot_to"`
+	VisitStatus          string     `gorm:"column:visit_status"`
+	CheckinTime          *time.Time `gorm:"column:checkin_time"`
+	CheckoutTime         *time.Time `gorm:"column:checkout_time"`
+	CheckinLocationLat   *float64   `gorm:"column:checkin_location_lat"`
+	CheckinLocationLong  *float64   `gorm:"column:checkin_location_long"`
+	CheckoutLocationLat  *float64   `gorm:"column:checkout_location_lat"`
+	CheckoutLocationLong *float64   `gorm:"column:checkout_location_long"`
+	Tasks                []Task     `gorm:"foreignKey:ScheduleID"`
+	ServiceNote          *string    `gorm:"column:service_note"`
+	CreatedAt            time.Time  `gorm:"autoCreateTime:milli"`
+	UpdatedAt            time.Time  `gorm:"autoUpdateTime:milli"`
 }
 
 type Task struct {
-	ID          uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	ScheduleID  uuid.UUID  `gorm:"column:schedule_id;type:uuid"`
-	Title       string     `gorm:"column:title"`
-	Description string     `gorm:"column:description"`
-	Status      string     `gorm:"column:status"`
-	Done        *bool      `gorm:"column:done"`
-	Feedback    *string    `gorm:"column:feedback"`
-	CreatedAt   time.Time  `gorm:"autoCreateTime:milli"`
-	UpdatedAt   time.Time  `gorm:"autoUpdateTime:milli"`
+	ID          uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ScheduleID  uuid.UUID `gorm:"column:schedule_id;type:uuid"`
+	Title       string    `gorm:"column:title"`
+	Description string    `gorm:"column:description"`
+	Status      string    `gorm:"column:status"`
+	Done        *bool     `gorm:"column:done"`
+	Feedback    *string   `gorm:"column:feedback"`
+	CreatedAt   time.Time `gorm:"autoCreateTime:milli"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime:milli"`
 }
 
 func (Schedule) TableName() string {
@@ -113,7 +114,6 @@ func (r *Repository) UpdateSchedule(id uuid.UUID, updates map[string]interface{}
 		return nil, domainErrors.NewAppErrorWithType(domainErrors.UnknownError)
 	}
 
-
 	err := r.DB.Model(&scheduleObj).Updates(updates).Error
 	if err != nil {
 		r.Logger.Error("Error updating schedule", zap.Error(err), zap.String("id", id.String()))
@@ -124,7 +124,7 @@ func (r *Repository) UpdateSchedule(id uuid.UUID, updates map[string]interface{}
 			return nil, errUnmarshal
 		}
 		switch newError.Number {
-		case 1062: 
+		case 1062:
 			return nil, domainErrors.NewAppErrorWithType(domainErrors.ResourceAlreadyExists)
 		default:
 			return nil, domainErrors.NewAppErrorWithType(domainErrors.UnknownError)
@@ -164,16 +164,16 @@ func (s *Schedule) toDomainMapper() *domainSchedule.Schedule {
 	}
 
 	return &domainSchedule.Schedule{
-		ID:               s.ID,
-		ClientUserID:     s.ClientUserID,
-		AssignedUserID:   s.AssignedUserID, 
-		ServiceName:      s.ServiceName,     
+		ID:             s.ID,
+		ClientUserID:   s.ClientUserID,
+		AssignedUserID: s.AssignedUserID,
+		ServiceName:    s.ServiceName,
 		ScheduledSlot: domainSchedule.ScheduledSlot{
 			From: s.ScheduledSlotFrom,
 			To:   s.ScheduledSlotTo,
 		},
-		VisitStatus: s.VisitStatus,
-		CheckinTime: s.CheckinTime,
+		VisitStatus:  s.VisitStatus,
+		CheckinTime:  s.CheckinTime,
 		CheckoutTime: s.CheckoutTime,
 		CheckinLocation: domainSchedule.Location{
 			Lat:  s.CheckinLocationLat,
@@ -227,7 +227,7 @@ func (r *Repository) Create(newSchedule *domainSchedule.Schedule) (*domainSchedu
 			return nil, errUnmarshal
 		}
 		switch newError.Number {
-		case 1062: 
+		case 1062:
 			return nil, domainErrors.NewAppErrorWithType(domainErrors.ResourceAlreadyExists)
 		default:
 			return nil, domainErrors.NewAppErrorWithType(domainErrors.UnknownError)
@@ -255,23 +255,23 @@ func fromDomainMapper(s *domainSchedule.Schedule) *Schedule {
 	}
 
 	return &Schedule{
-		ID:               s.ID,
-		ClientUserID:     s.ClientUserID,
-		AssignedUserID:   s.AssignedUserID, 
-		ServiceName:      s.ServiceName,     
-		ScheduledSlotFrom: s.ScheduledSlot.From,
-		ScheduledSlotTo:   s.ScheduledSlot.To,
-		VisitStatus:      s.VisitStatus,
-		CheckinTime:      s.CheckinTime,
-		CheckoutTime:     s.CheckoutTime,
-		CheckinLocationLat:  s.CheckinLocation.Lat,
-		CheckinLocationLong: s.CheckinLocation.Long,
+		ID:                   s.ID,
+		ClientUserID:         s.ClientUserID,
+		AssignedUserID:       s.AssignedUserID,
+		ServiceName:          s.ServiceName,
+		ScheduledSlotFrom:    s.ScheduledSlot.From,
+		ScheduledSlotTo:      s.ScheduledSlot.To,
+		VisitStatus:          s.VisitStatus,
+		CheckinTime:          s.CheckinTime,
+		CheckoutTime:         s.CheckoutTime,
+		CheckinLocationLat:   s.CheckinLocation.Lat,
+		CheckinLocationLong:  s.CheckinLocation.Long,
 		CheckoutLocationLat:  s.CheckoutLocation.Lat,
 		CheckoutLocationLong: s.CheckoutLocation.Long,
-		Tasks:            tasksModel,
-		ServiceNote:      s.ServiceNote,
-		CreatedAt:        s.CreatedAt,
-		UpdatedAt:        s.UpdatedAt,
+		Tasks:                tasksModel,
+		ServiceNote:          s.ServiceNote,
+		CreatedAt:            s.CreatedAt,
+		UpdatedAt:            s.UpdatedAt,
 	}
 }
 

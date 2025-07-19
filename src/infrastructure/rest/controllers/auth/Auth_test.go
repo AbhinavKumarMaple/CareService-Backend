@@ -10,9 +10,10 @@ import (
 
 	"github.com/google/uuid"
 
-	useCaseAuth "github.com/gbrayhan/microservices-go/src/application/usecases/auth"
-	userDomain "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
+	useCaseAuth "caregiver/src/application/usecases/auth"
+	userDomain "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -108,7 +109,7 @@ func TestAuthController_Login_InvalidRequest(t *testing.T) {
 	logger := setupLogger(t)
 	controller := NewAuthController(mockUseCase, logger)
 
-	requestBody := []byte(`{"email": "test@example.com"}`) 
+	requestBody := []byte(`{"email": "test@example.com"}`)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/login", bytes.NewBuffer(requestBody))
@@ -178,7 +179,7 @@ func TestAuthController_GetAccessTokenByRefreshToken_InvalidRequest(t *testing.T
 	logger := setupLogger(t)
 	controller := NewAuthController(mockUseCase, logger)
 
-	requestBody := []byte(`{}`) 
+	requestBody := []byte(`{}`)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/refresh", bytes.NewBuffer(requestBody))

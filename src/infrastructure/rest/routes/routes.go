@@ -3,7 +3,8 @@ package routes
 import (
 	"net/http"
 
-	"github.com/gbrayhan/microservices-go/src/infrastructure/di"
+	"caregiver/src/infrastructure/di"
+
 	"github.com/gin-gonic/gin"
 )
 

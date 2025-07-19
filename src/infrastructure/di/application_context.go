@@ -3,19 +3,20 @@ package di
 import (
 	"sync"
 
-	authUseCase "github.com/gbrayhan/microservices-go/src/application/usecases/auth"
-	scheduleUseCase "github.com/gbrayhan/microservices-go/src/application/usecases/schedule"
-	userUseCase "github.com/gbrayhan/microservices-go/src/application/usecases/user"
-	domainSchedule "github.com/gbrayhan/microservices-go/src/domain/schedule"
-	scheduleRepo "github.com/gbrayhan/microservices-go/src/infrastructure/repository/psql/schedule"
+	authUseCase "caregiver/src/application/usecases/auth"
+	scheduleUseCase "caregiver/src/application/usecases/schedule"
+	userUseCase "caregiver/src/application/usecases/user"
+	domainSchedule "caregiver/src/domain/schedule"
+	scheduleRepo "caregiver/src/infrastructure/repository/psql/schedule"
 
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/repository/psql"
-	userRepo "github.com/gbrayhan/microservices-go/src/infrastructure/repository/psql/user"
-	authController "github.com/gbrayhan/microservices-go/src/infrastructure/rest/controllers/auth"
-	scheduleController "github.com/gbrayhan/microservices-go/src/infrastructure/rest/controllers/schedule"
-	userController "github.com/gbrayhan/microservices-go/src/infrastructure/rest/controllers/user"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/security"
+	logger "caregiver/src/infrastructure/logger"
+	"caregiver/src/infrastructure/repository/psql"
+	userRepo "caregiver/src/infrastructure/repository/psql/user"
+	authController "caregiver/src/infrastructure/rest/controllers/auth"
+	scheduleController "caregiver/src/infrastructure/rest/controllers/schedule"
+	userController "caregiver/src/infrastructure/rest/controllers/user"
+	"caregiver/src/infrastructure/security"
+
 	"gorm.io/gorm"
 )
 

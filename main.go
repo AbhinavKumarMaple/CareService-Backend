@@ -6,10 +6,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/gbrayhan/microservices-go/src/infrastructure/di"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/rest/middlewares"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/rest/routes"
+	"caregiver/src/infrastructure/di"
+	logger "caregiver/src/infrastructure/logger"
+	"caregiver/src/infrastructure/rest/middlewares"
+	"caregiver/src/infrastructure/rest/routes"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -36,7 +37,6 @@ func main() {
 	env := getEnvOrDefault("GO_ENV", "development")
 	var loggerInstance *logger.Logger
 	var err error
-	
 
 	if env == "development" {
 		loggerInstance, err = logger.NewDevelopmentLogger()

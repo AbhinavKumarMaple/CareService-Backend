@@ -5,10 +5,11 @@ import (
 	"os"
 	"strings"
 
-	domainUser "github.com/gbrayhan/microservices-go/src/domain/user" // Added
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/repository/psql/schedule"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/repository/psql/user"
+	domainUser "caregiver/src/domain/user" // Added
+	logger "caregiver/src/infrastructure/logger"
+	"caregiver/src/infrastructure/repository/psql/schedule"
+	"caregiver/src/infrastructure/repository/psql/user"
+
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -25,7 +26,6 @@ type DatabaseConfig struct {
 	DBName   string
 	SSLMode  string
 }
-
 
 func loadDatabaseConfig() (DatabaseConfig, error) {
 	host := os.Getenv("DB_HOST")
@@ -116,7 +116,7 @@ func (r *PSQLRepository) InitDatabase() error {
 	}
 
 	gormZap := logger.NewGormLogger(r.Logger.Log).
-		LogMode(gormlogger.Warn) 
+		LogMode(gormlogger.Warn)
 
 	r.DB, err = gorm.Open(postgres.Open(cfg.GetDSN()), &gorm.Config{
 		Logger: gormZap,
@@ -132,14 +132,12 @@ func (r *PSQLRepository) InitDatabase() error {
 		return err
 	}
 
-
 	r.Logger.Info("Database connection and migrations successful")
 	return nil
 }
 
 func (r *PSQLRepository) MigrateEntitiesGORM() error {
-	var err error 
-
+	var err error
 
 	err = r.DB.AutoMigrate(&user.User{}, &schedule.Schedule{}, &schedule.Task{})
 	if err != nil {
@@ -173,15 +171,15 @@ func (r *PSQLRepository) SeedInitialUser() error {
 	}
 
 	newUser := user.User{
-		ID:           uuid.New(), 
-		UserName:     "admin",    
+		ID:           uuid.New(),
+		UserName:     "admin",
 		Email:        email,
 		FirstName:    "Admin",
 		LastName:     "User",
 		Status:       true,
 		HashPassword: string(hashedPassword),
-		Role:         "admin", 
-		Location: domainUser.Location{ 
+		Role:         "admin",
+		Location: domainUser.Location{
 			HouseNumber: "123",
 			Street:      "Admin St",
 			City:        "Admin City",

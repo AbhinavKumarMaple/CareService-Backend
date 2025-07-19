@@ -1,7 +1,8 @@
 package routes
 
 import (
-	authController "github.com/gbrayhan/microservices-go/src/infrastructure/rest/controllers/auth"
+	authController "caregiver/src/infrastructure/rest/controllers/auth"
+
 	"github.com/gin-gonic/gin"
 )
 

@@ -5,11 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gbrayhan/microservices-go/src/domain"
-	domainErrors "github.com/gbrayhan/microservices-go/src/domain/errors"
-	domainUser "github.com/gbrayhan/microservices-go/src/domain/user"
-	logger "github.com/gbrayhan/microservices-go/src/infrastructure/logger"
-	"github.com/gbrayhan/microservices-go/src/infrastructure/security"
+	"caregiver/src/domain"
+	domainErrors "caregiver/src/domain/errors"
+	domainUser "caregiver/src/domain/user"
+	logger "caregiver/src/infrastructure/logger"
+	"caregiver/src/infrastructure/security"
+
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
